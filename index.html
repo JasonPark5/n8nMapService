@@ -567,9 +567,11 @@ function sendText(text) {
   })
   .then(function(data) {
     removeMessage(loadingId);
-    var candidates = data.candidates || (Array.isArray(data) ? data : []);
-    var mode = data.transportMode || transportMode;
-    var dest = data.destination || '';
+    // n8n이 배열로 감싸서 보내는 경우 처리
+    var root = Array.isArray(data) ? data[0] : data;
+    var candidates = root.candidates || (Array.isArray(root) ? root : []);
+    var mode = root.transportMode || transportMode;
+    var dest = root.destination || '';
 
     if (mode !== transportMode) setTransport(mode);
     if (candidates.length === 0) {
