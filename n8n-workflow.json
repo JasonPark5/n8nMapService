@@ -94,11 +94,11 @@
           "parameters": [
             {
               "name": "X-Naver-Client-Id",
-              "value": "={{ $credentials.username }}"
+              "value": "={{ $env.NAVER_CLIENT_ID }}"
             },
             {
               "name": "X-Naver-Client-Secret",
-              "value": "={{ $credentials.password }}"
+              "value": "={{ $env.NAVER_CLIENT_SECRET }}"
             }
           ]
         },
@@ -135,13 +135,7 @@
       "name": "네이버 지역 검색",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
-      "position": [1120, 300],
-      "credentials": {
-        "httpBasicAuth": {
-          "id": "naver-api-credentials",
-          "name": "Naver Search API"
-        }
-      }
+      "position": [1120, 300]
     },
     {
       "parameters": {
