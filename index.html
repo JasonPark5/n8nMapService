@@ -1213,8 +1213,8 @@ function navigateTo(dlat, dlng, dname, mode) {
     : 'nmap://route/car?slat=' + slat + '&slng=' + slng + '&sname=' + enc('현재위치') + '&dlat=' + dlat + '&dlng=' + dlng + '&dname=' + enc(dname) + '&appname=' + appname;
 
   var webUrl = mode === 'transit'
-    ? 'https://map.naver.com/v5/directions/-/' + dlng + ',' + dlat + ',' + enc(dname) + ',-/transit?c=15,0,0,0,dh'
-    : 'https://map.naver.com/v5/directions/-/' + dlng + ',' + dlat + ',' + enc(dname) + ',-/car?c=15,0,0,0,dh';
+    ? 'https://map.naver.com/v5/directions/' + slng + ',' + slat + ',' + enc('현재위치') + ',15,map/' + dlng + ',' + dlat + ',' + enc(dname) + ',15,map/-/transit?c=15,0,0,0,dh'
+    : 'https://map.naver.com/v5/directions/' + slng + ',' + slat + ',' + enc('현재위치') + ',15,map/' + dlng + ',' + dlat + ',' + enc(dname) + ',15,map/-/car?c=15,0,0,0,dh';
 
   var isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
   if (isMobile) {
