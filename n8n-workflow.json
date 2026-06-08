@@ -1,0 +1,192 @@
+{
+  "name": "음성 길찾기 서비스",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "map-search",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "webhook-node",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "map-search"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse destination and transport mode from Korean text\nconst body = $input.first().json.body || $input.first().json;\nconst text = body.text || '';\nconst userLat = body.lat || 37.5665;\nconst userLng = body.lng || 126.9780;\nconst userTransportMode = body.transportMode || 'transit';\n\nconsole.log('Input text:', text);\n\n// Detect transport mode from text\nlet transportMode = userTransportMode;\nif (/대중교통|버스|지하철|전철|기차|KTX|SRT/.test(text)) {\n  transportMode = 'transit';\n} else if (/자동차|차로|드라이브|운전|차량/.test(text)) {\n  transportMode = 'car';\n}\n\n// Extract destination from Korean patterns\nlet destination = text;\n\n// Remove common navigation phrases\nconst patterns = [\n  /(.+?)(?:으로|로)\\s*(?:가기|가는\\s*길|길찾기|안내)/,\n  /(.+?)(?:에|까지)\\s*(?:가기|가는\\s*길|길찾기|안내)/,\n  /(.+?)\\s*(?:가는\\s*길)/,\n  /(.+?)\\s*(?:찾아줘|찾아주세요|알려줘|알려주세요)/,\n  /(.+?)(?:으로|로|에|까지)\\s*(?:대중교통|자동차|버스|지하철)/,\n  /(?:대중교통으로|자동차로|버스로|지하철로)?\\s*(.+?)(?:으로|로|에|까지)?\\s*(?:가기|가자|갈래|가고\\s*싶어)/,\n  /(.+?)\\s*(?:어떻게\\s*가|어떻게\\s*가요|가는\\s*방법)/,\n];\n\nfor (const pattern of patterns) {\n  const match = text.match(pattern);\n  if (match && match[1]) {\n    destination = match[1].trim();\n    // Remove leading transport mode words\n    destination = destination.replace(/^(?:대중교통으로|자동차로|버스로|지하철로|도보로)\\s*/, '').trim();\n    break;\n  }\n}\n\n// Clean up destination: remove extra whitespace\ndestination = destination.replace(/\\s+/g, ' ').trim();\n\n// If destination is still too long or unchanged, try to extract key noun\nif (destination === text && text.length > 20) {\n  // Fallback: just use the text as-is (Naver API can handle natural language)\n  destination = text;\n}\n\nconsole.log('Extracted destination:', destination, '| Transport:', transportMode);\n\nreturn [\n  {\n    json: {\n      destination,\n      transportMode,\n      userLat,\n      userLng,\n      originalText: text,\n    },\n  },\n];"
+      },
+      "id": "parse-destination",
+      "name": "목적지 추출",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://openapi.naver.com/v1/search/local.json",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Naver-Client-Id",
+              "value": "={{ $credentials.name }}"
+            },
+            {
+              "name": "X-Naver-Client-Secret",
+              "value": "={{ $credentials.value }}"
+            }
+          ]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "={{ $json.destination }}"
+            },
+            {
+              "name": "display",
+              "value": "5"
+            },
+            {
+              "name": "start",
+              "value": "1"
+            },
+            {
+              "name": "sort",
+              "value": "random"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "naver-search",
+      "name": "네이버 지역 검색",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [680, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "naver-api-credentials",
+          "name": "Naver API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Format Naver Local Search API results\nconst data = $input.first().json;\nconst prevData = $('목적지 추출').first().json;\n\nif (!data || !data.items || data.items.length === 0) {\n  return [{ json: [] }];\n}\n\n/**\n * Convert Naver Local Search API coordinates to WGS84\n * Naver Local Search returns mapx/mapy as integer strings\n * where mapx = longitude * 10^7 and mapy = latitude * 10^7\n */\nfunction convertCoords(mapx, mapy) {\n  const lng = parseInt(mapx) / 10000000;\n  const lat = parseInt(mapy) / 10000000;\n  return { lat, lng };\n}\n\n/**\n * Strip HTML tags from Naver API response\n * (Naver wraps matched text in <b> tags)\n */\nfunction stripHtml(str) {\n  return (str || '').replace(/<[^>]*>/g, '');\n}\n\nconst results = data.items.map((item, index) => {\n  const { lat, lng } = convertCoords(item.mapx, item.mapy);\n  return {\n    index: index + 1,\n    name: stripHtml(item.title),\n    address: stripHtml(item.address) || stripHtml(item.roadAddress),\n    roadAddress: stripHtml(item.roadAddress),\n    jibunAddress: stripHtml(item.address),\n    category: stripHtml(item.category),\n    telephone: item.telephone || '',\n    link: item.link || '',\n    lat,\n    lng,\n  };\n});\n\nconsole.log('Formatted results:', JSON.stringify(results, null, 2));\n\nreturn [{ json: results }];"
+      },
+      "id": "format-results",
+      "name": "결과 포맷",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "POST, GET, OPTIONS"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "Content-Type"
+              }
+            ]
+          }
+        }
+      },
+      "id": "respond-webhook",
+      "name": "Webhook 응답",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1120, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "목적지 추출",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "목적지 추출": {
+      "main": [
+        [
+          {
+            "node": "네이버 지역 검색",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "네이버 지역 검색": {
+      "main": [
+        [
+          {
+            "node": "결과 포맷",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "결과 포맷": {
+      "main": [
+        [
+          {
+            "node": "Webhook 응답",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "지도서비스"
+    }
+  ],
+  "triggerCount": 0,
+  "updatedAt": "2026-06-08T00:00:00.000Z",
+  "versionId": "1"
+}
