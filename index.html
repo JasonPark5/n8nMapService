@@ -16,6 +16,7 @@
       --user-bubble: #03c75a;
       --bot-bubble: #ffffff;
       --shadow: 0 2px 8px rgba(0,0,0,0.1);
+      --star: #f59e0b;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -35,45 +36,65 @@
     .header {
       background: var(--card-bg);
       border-bottom: 1px solid var(--border);
-      padding: 16px 20px;
+      padding: 14px 20px;
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
       position: sticky;
       top: 0;
       z-index: 10;
       box-shadow: var(--shadow);
     }
-    .header-icon {
-      width: 36px; height: 36px;
-      background: var(--primary);
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 18px;
+    .header-icon { font-size: 24px; }
+    .header-title { flex: 1; }
+    .header-title h1 { font-size: 17px; font-weight: 700; }
+    .header-title p { font-size: 11px; color: var(--text-muted); }
+    .header-actions { display: flex; gap: 4px; }
+    .icon-btn {
+      background: none; border: none; cursor: pointer;
+      font-size: 20px; padding: 6px; border-radius: 8px;
+      transition: background 0.2s;
     }
-    .header h1 { font-size: 18px; font-weight: 700; }
-    .header p { font-size: 12px; color: var(--text-muted); }
+    .icon-btn:hover { background: var(--bg); }
+
+    /* Tabs */
+    .tab-bar {
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+    }
+    .tab-btn {
+      flex: 1; padding: 10px 8px;
+      border: none; background: none; cursor: pointer;
+      font-size: 13px; font-weight: 500;
+      color: var(--text-muted);
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+      display: flex; align-items: center; justify-content: center; gap: 5px;
+    }
+    .tab-btn.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
 
     /* Transport toggle */
     .transport-bar {
       background: var(--card-bg);
-      padding: 10px 20px;
+      padding: 8px 16px;
       display: flex;
       gap: 8px;
       border-bottom: 1px solid var(--border);
     }
     .transport-btn {
-      flex: 1;
-      padding: 8px 12px;
+      flex: 1; padding: 7px 10px;
       border: 2px solid var(--border);
       border-radius: 20px;
       background: var(--card-bg);
       cursor: pointer;
-      font-size: 14px;
-      font-weight: 500;
+      font-size: 13px; font-weight: 500;
       color: var(--text-muted);
       transition: all 0.2s;
-      display: flex; align-items: center; justify-content: center; gap: 6px;
+      display: flex; align-items: center; justify-content: center; gap: 5px;
     }
     .transport-btn.active {
       border-color: var(--primary);
@@ -81,42 +102,33 @@
       background: #f0fdf4;
     }
 
+    /* Content panels */
+    .panel { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+    .panel.active { display: flex; }
+
     /* Chat area */
     .chat-area {
-      flex: 1;
-      overflow-y: auto;
-      padding: 20px 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
+      flex: 1; overflow-y: auto;
+      padding: 16px 14px;
+      display: flex; flex-direction: column; gap: 12px;
     }
 
     /* Empty state */
     .empty-state {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 40px 20px;
-      gap: 16px;
-      color: var(--text-muted);
-      flex: 1;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center; padding: 30px 20px; gap: 14px;
+      color: var(--text-muted); flex: 1;
     }
-    .empty-state .big-icon { font-size: 64px; }
-    .empty-state h2 { font-size: 20px; font-weight: 700; color: var(--text); }
+    .empty-state .big-icon { font-size: 56px; }
+    .empty-state h2 { font-size: 19px; font-weight: 700; color: var(--text); }
     .empty-state p { font-size: 14px; line-height: 1.6; }
     .example-chips {
-      display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 8px;
+      display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 6px;
     }
     .chip {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 6px 14px;
-      font-size: 13px;
-      cursor: pointer;
-      transition: all 0.2s;
+      background: var(--card-bg); border: 1px solid var(--border);
+      border-radius: 16px; padding: 6px 14px; font-size: 13px;
+      cursor: pointer; transition: all 0.2s;
     }
     .chip:hover { border-color: var(--primary); color: var(--primary); }
 
@@ -125,43 +137,31 @@
     .message.user { align-self: flex-end; align-items: flex-end; }
     .message.bot { align-self: flex-start; align-items: flex-start; }
     .bubble {
-      padding: 10px 14px;
-      border-radius: 18px;
-      font-size: 15px;
-      line-height: 1.5;
+      padding: 10px 14px; border-radius: 18px;
+      font-size: 15px; line-height: 1.5;
     }
     .message.user .bubble {
-      background: var(--user-bubble);
-      color: #fff;
+      background: var(--user-bubble); color: #fff;
       border-bottom-right-radius: 4px;
     }
     .message.bot .bubble {
-      background: var(--bot-bubble);
-      color: var(--text);
-      border-bottom-left-radius: 4px;
-      box-shadow: var(--shadow);
+      background: var(--bot-bubble); color: var(--text);
+      border-bottom-left-radius: 4px; box-shadow: var(--shadow);
     }
     .message-time {
-      font-size: 11px;
-      color: var(--text-muted);
-      margin-top: 4px;
-      padding: 0 4px;
+      font-size: 11px; color: var(--text-muted);
+      margin-top: 4px; padding: 0 4px;
     }
 
     /* Loading dots */
     .loading-bubble {
-      background: var(--bot-bubble);
-      border-radius: 18px;
-      border-bottom-left-radius: 4px;
-      padding: 14px 18px;
-      box-shadow: var(--shadow);
+      background: var(--bot-bubble); border-radius: 18px; border-bottom-left-radius: 4px;
+      padding: 14px 18px; box-shadow: var(--shadow);
       display: flex; gap: 4px; align-items: center;
     }
     .dot {
-      width: 8px; height: 8px;
-      background: var(--text-muted);
-      border-radius: 50%;
-      animation: bounce 1.2s infinite;
+      width: 8px; height: 8px; background: var(--text-muted);
+      border-radius: 50%; animation: bounce 1.2s infinite;
     }
     .dot:nth-child(2) { animation-delay: 0.2s; }
     .dot:nth-child(3) { animation-delay: 0.4s; }
@@ -170,125 +170,130 @@
       30% { transform: translateY(-6px); }
     }
 
-    /* Location candidate cards */
-    .candidates-wrapper { width: 100%; max-width: 380px; }
+    /* Candidate cards */
+    .candidates-wrapper { width: 100%; max-width: 400px; }
     .candidates-title {
       font-size: 13px; font-weight: 600; color: var(--text-muted);
-      margin-bottom: 8px; padding-left: 4px;
+      margin-bottom: 8px; padding-left: 2px;
     }
     .candidate-card {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 14px;
-      margin-bottom: 8px;
-      cursor: pointer;
-      transition: all 0.2s;
+      background: var(--card-bg); border: 1.5px solid var(--border);
+      border-radius: 14px; padding: 13px;
+      margin-bottom: 8px; transition: all 0.2s;
       box-shadow: var(--shadow);
     }
-    .candidate-card:hover, .candidate-card:active {
-      border-color: var(--primary);
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(3,199,90,0.2);
-    }
-    .card-header { display: flex; align-items: flex-start; gap: 10px; }
+    .candidate-card:hover { border-color: var(--primary); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(3,199,90,0.2); }
+    .card-row1 { display: flex; align-items: flex-start; gap: 10px; }
     .card-num {
-      min-width: 24px; height: 24px;
-      background: var(--primary);
-      color: #fff;
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 12px; font-weight: 700;
+      min-width: 22px; height: 22px; background: var(--primary); color: #fff;
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; margin-top: 2px;
     }
-    .card-info { flex: 1; }
-    .card-name { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+    .card-info { flex: 1; min-width: 0; }
+    .card-name { font-size: 15px; font-weight: 700; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .card-address { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
-    .card-meta {
+    .card-star {
+      background: none; border: none; cursor: pointer;
+      font-size: 20px; padding: 2px; line-height: 1; flex-shrink: 0;
+      transition: transform 0.15s;
+    }
+    .card-star:hover { transform: scale(1.2); }
+    .card-row2 {
       display: flex; align-items: center; justify-content: space-between;
       margin-top: 10px;
     }
+    .card-tags { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
     .card-category {
-      background: #f3f4f6;
-      border-radius: 10px;
-      padding: 3px 8px;
-      font-size: 11px;
-      color: var(--text-muted);
+      background: #f3f4f6; border-radius: 10px; padding: 3px 8px;
+      font-size: 11px; color: var(--text-muted);
+    }
+    .card-distance {
+      background: #eff6ff; color: #3b82f6;
+      border-radius: 10px; padding: 3px 8px;
+      font-size: 11px; font-weight: 600;
     }
     .card-select-btn {
-      background: var(--primary);
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      padding: 6px 14px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s;
+      background: var(--primary); color: #fff; border: none;
+      border-radius: 8px; padding: 7px 14px;
+      font-size: 13px; font-weight: 600; cursor: pointer;
+      transition: background 0.2s; white-space: nowrap;
     }
     .card-select-btn:hover { background: var(--primary-dark); }
 
+    /* Favorites panel */
+    .fav-panel {
+      flex: 1; overflow-y: auto; padding: 16px 14px;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .fav-empty {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; gap: 12px; padding: 60px 20px;
+      color: var(--text-muted); text-align: center; flex: 1;
+    }
+    .fav-empty .big-icon { font-size: 48px; }
+    .fav-item {
+      background: var(--card-bg); border: 1.5px solid var(--border);
+      border-radius: 14px; padding: 13px; box-shadow: var(--shadow);
+    }
+    .fav-row1 { display: flex; align-items: flex-start; gap: 8px; }
+    .fav-icon { font-size: 22px; flex-shrink: 0; }
+    .fav-info { flex: 1; min-width: 0; }
+    .fav-name { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
+    .fav-address { font-size: 12px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .fav-row2 { display: flex; gap: 8px; margin-top: 10px; }
+    .fav-transit-btn, .fav-car-btn, .fav-delete-btn {
+      flex: 1; padding: 7px 10px; border-radius: 8px;
+      font-size: 12px; font-weight: 600; cursor: pointer;
+      border: none; transition: background 0.2s;
+    }
+    .fav-transit-btn { background: #eff6ff; color: #3b82f6; }
+    .fav-car-btn { background: #f0fdf4; color: var(--primary); }
+    .fav-delete-btn { background: #fef2f2; color: #ef4444; flex: 0 0 auto; padding: 7px 12px; }
+    .fav-transit-btn:hover { background: #dbeafe; }
+    .fav-car-btn:hover { background: #dcfce7; }
+    .fav-delete-btn:hover { background: #fee2e2; }
+
     /* Input area */
     .input-area {
-      background: var(--card-bg);
-      border-top: 1px solid var(--border);
-      padding: 16px 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
+      background: var(--card-bg); border-top: 1px solid var(--border);
+      padding: 12px 16px; display: flex; flex-direction: column; gap: 8px;
     }
-    .mic-row {
-      display: flex; align-items: center; justify-content: center; gap: 16px;
+    .location-status {
+      font-size: 11px; color: var(--text-muted); text-align: center;
+      display: flex; align-items: center; justify-content: center; gap: 4px;
     }
+    .loc-dot { width: 7px; height: 7px; border-radius: 50%; background: #d1d5db; }
+    .loc-dot.ok { background: var(--primary); }
+    .loc-dot.err { background: #ef4444; }
+    .mic-row { display: flex; align-items: center; justify-content: center; gap: 14px; }
     .mic-btn {
-      width: 64px; height: 64px;
-      border-radius: 50%;
-      background: var(--primary);
-      border: none;
-      cursor: pointer;
+      width: 60px; height: 60px; border-radius: 50%;
+      background: var(--primary); border: none; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
-      font-size: 28px;
-      box-shadow: 0 4px 16px rgba(3,199,90,0.4);
+      font-size: 26px; box-shadow: 0 4px 16px rgba(3,199,90,0.4);
       transition: all 0.2s;
-      position: relative;
     }
     .mic-btn:hover { transform: scale(1.05); }
     .mic-btn.recording {
-      background: #ef4444;
-      box-shadow: 0 4px 16px rgba(239,68,68,0.4);
+      background: #ef4444; box-shadow: 0 4px 16px rgba(239,68,68,0.4);
       animation: pulse 1s infinite;
     }
     @keyframes pulse {
       0%, 100% { transform: scale(1); box-shadow: 0 4px 16px rgba(239,68,68,0.4); }
       50% { transform: scale(1.08); box-shadow: 0 4px 24px rgba(239,68,68,0.6); }
     }
-    .mic-hint {
-      font-size: 13px; color: var(--text-muted); text-align: center;
-    }
+    .mic-hint { font-size: 12px; color: var(--text-muted); text-align: center; }
     .mic-hint.recording { color: #ef4444; font-weight: 600; }
-
-    /* Text input fallback */
-    .text-input-row {
-      display: flex; gap: 8px;
-    }
+    .text-input-row { display: flex; gap: 8px; }
     .text-input {
-      flex: 1;
-      padding: 10px 14px;
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      font-size: 14px;
-      outline: none;
-      font-family: inherit;
+      flex: 1; padding: 9px 14px; border: 1px solid var(--border);
+      border-radius: 20px; font-size: 14px; outline: none; font-family: inherit;
       transition: border-color 0.2s;
     }
     .text-input:focus { border-color: var(--primary); }
     .send-btn {
-      width: 40px; height: 40px;
-      background: var(--primary);
-      color: #fff;
-      border: none;
-      border-radius: 50%;
-      cursor: pointer;
-      font-size: 16px;
+      width: 38px; height: 38px; background: var(--primary); color: #fff;
+      border: none; border-radius: 50%; cursor: pointer; font-size: 15px;
       display: flex; align-items: center; justify-content: center;
       transition: background 0.2s;
     }
@@ -296,138 +301,109 @@
 
     /* Config modal */
     .modal-overlay {
-      display: none;
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,0.5);
-      z-index: 100;
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.5); z-index: 100;
       align-items: center; justify-content: center;
     }
     .modal-overlay.open { display: flex; }
     .modal {
-      background: var(--card-bg);
-      border-radius: 16px;
-      padding: 24px;
-      width: 90%; max-width: 400px;
+      background: var(--card-bg); border-radius: 16px;
+      padding: 22px; width: 92%; max-width: 420px;
       box-shadow: 0 8px 32px rgba(0,0,0,0.2);
     }
-    .modal h2 { font-size: 18px; margin-bottom: 16px; }
-    .modal label { font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px; color: var(--text-muted); }
+    .modal h2 { font-size: 17px; margin-bottom: 16px; }
+    .modal label { font-size: 12px; font-weight: 600; display: block; margin-bottom: 5px; color: var(--text-muted); }
     .modal input {
-      width: 100%;
-      padding: 10px 14px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      font-size: 14px;
-      margin-bottom: 16px;
-      outline: none;
+      width: 100%; padding: 9px 13px; border: 1px solid var(--border);
+      border-radius: 8px; font-size: 14px; margin-bottom: 14px;
+      outline: none; font-family: inherit;
     }
     .modal input:focus { border-color: var(--primary); }
+    .modal-note { font-size: 11px; color: var(--text-muted); margin-top: -10px; margin-bottom: 14px; line-height: 1.5; }
     .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
     .btn-secondary {
-      padding: 10px 20px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      background: var(--card-bg);
-      cursor: pointer;
-      font-size: 14px;
+      padding: 9px 18px; border: 1px solid var(--border);
+      border-radius: 8px; background: var(--card-bg); cursor: pointer; font-size: 14px;
     }
     .btn-primary {
-      padding: 10px 20px;
-      background: var(--primary);
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 600;
-    }
-    .config-btn {
-      position: absolute; right: 20px; top: 50%; transform: translateY(-50%);
-      background: none; border: none; cursor: pointer;
-      font-size: 18px; color: var(--text-muted);
+      padding: 9px 18px; background: var(--primary); color: #fff;
+      border: none; border-radius: 8px; cursor: pointer;
+      font-size: 14px; font-weight: 600;
     }
 
-    /* Error toast */
+    /* Toast */
     .toast {
-      position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%);
-      background: #1f2937;
-      color: #fff;
-      padding: 10px 20px;
-      border-radius: 20px;
-      font-size: 14px;
-      opacity: 0;
-      transition: opacity 0.3s;
-      z-index: 50;
-      pointer-events: none;
-      white-space: nowrap;
+      position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
+      background: #1f2937; color: #fff; padding: 9px 18px; border-radius: 20px;
+      font-size: 13px; opacity: 0; transition: opacity 0.3s;
+      z-index: 50; pointer-events: none; white-space: nowrap; max-width: 90vw;
     }
     .toast.show { opacity: 1; }
-
-    /* Location status */
-    .location-status {
-      font-size: 12px; color: var(--text-muted); text-align: center;
-      padding: 4px 0;
-      display: flex; align-items: center; justify-content: center; gap: 4px;
-    }
-    .loc-dot {
-      width: 8px; height: 8px; border-radius: 50%;
-      background: #d1d5db;
-    }
-    .loc-dot.ok { background: var(--primary); }
-    .loc-dot.err { background: #ef4444; }
   </style>
 </head>
 <body>
 
 <!-- Header -->
-<div class="header" style="position:relative;">
+<div class="header">
   <div class="header-icon">🗺️</div>
-  <div>
+  <div class="header-title">
     <h1>음성 길찾기</h1>
     <p>말하면 네이버지도로 안내해드려요</p>
   </div>
-  <button class="config-btn" onclick="openConfig()" title="설정">⚙️</button>
+  <div class="header-actions">
+    <button class="icon-btn" onclick="openConfig()" title="설정">⚙️</button>
+  </div>
 </div>
 
-<!-- Transport toggle -->
-<div class="transport-bar">
-  <button class="transport-btn active" id="btn-transit" onclick="setTransport('transit')">
-    🚇 대중교통
-  </button>
-  <button class="transport-btn" id="btn-car" onclick="setTransport('car')">
-    🚗 자동차
-  </button>
+<!-- Tabs -->
+<div class="tab-bar">
+  <button class="tab-btn active" id="tab-chat" onclick="switchTab('chat')">💬 채팅</button>
+  <button class="tab-btn" id="tab-fav" onclick="switchTab('fav')">⭐ 즐겨찾기 <span id="fav-count"></span></button>
 </div>
 
-<!-- Chat area -->
-<div class="chat-area" id="chatArea">
-  <div class="empty-state" id="emptyState">
-    <div class="big-icon">🎤</div>
-    <h2>어디 가실 건가요?</h2>
-    <p>마이크 버튼을 누르고<br>목적지를 말씀해 주세요</p>
-    <div class="example-chips">
-      <div class="chip" onclick="sendText('강남역 가는 길')">강남역 가는 길</div>
-      <div class="chip" onclick="sendText('스타벅스 찾아줘')">스타벅스 찾아줘</div>
-      <div class="chip" onclick="sendText('홍대입구역까지 가기')">홍대입구역까지 가기</div>
-      <div class="chip" onclick="sendText('경복궁으로 가기')">경복궁으로 가기</div>
+<!-- Chat Panel -->
+<div class="panel active" id="panel-chat" style="overflow:hidden;">
+  <!-- Transport toggle -->
+  <div class="transport-bar">
+    <button class="transport-btn active" id="btn-transit" onclick="setTransport('transit')">🚇 대중교통</button>
+    <button class="transport-btn" id="btn-car" onclick="setTransport('car')">🚗 자동차</button>
+  </div>
+
+  <div class="chat-area" id="chatArea">
+    <div class="empty-state" id="emptyState">
+      <div class="big-icon">🎤</div>
+      <h2>어디 가실 건가요?</h2>
+      <p>마이크 버튼을 누르고<br>목적지를 말씀해 주세요</p>
+      <div class="example-chips">
+        <div class="chip" onclick="sendText('대중교통으로 강남역 가기')">강남역 가는 길</div>
+        <div class="chip" onclick="sendText('스타벅스 찾아줘')">스타벅스 찾아줘</div>
+        <div class="chip" onclick="sendText('홍대입구역까지 가기')">홍대입구역</div>
+        <div class="chip" onclick="sendText('경복궁으로 가기')">경복궁</div>
+        <div class="chip" onclick="sendText('자동차로 인천공항 가기')">인천공항 (자동차)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Input area -->
+  <div class="input-area">
+    <div class="location-status">
+      <div class="loc-dot" id="locDot"></div>
+      <span id="locStatus">위치 정보 가져오는 중...</span>
+    </div>
+    <div class="mic-row">
+      <button class="mic-btn" id="micBtn" onclick="toggleRecording()">🎤</button>
+    </div>
+    <div class="mic-hint" id="micHint">버튼을 누르고 말씀하세요</div>
+    <div class="text-input-row">
+      <input type="text" class="text-input" id="textInput" placeholder="직접 입력 (예: 강남역 가는 길)" />
+      <button class="send-btn" onclick="sendTextFromInput()">➤</button>
     </div>
   </div>
 </div>
 
-<!-- Input area -->
-<div class="input-area">
-  <div class="location-status">
-    <div class="loc-dot" id="locDot"></div>
-    <span id="locStatus">위치 정보 가져오는 중...</span>
-  </div>
-  <div class="mic-row">
-    <button class="mic-btn" id="micBtn" onclick="toggleRecording()">🎤</button>
-  </div>
-  <div class="mic-hint" id="micHint">버튼을 누르고 말씀하세요</div>
-  <div class="text-input-row">
-    <input type="text" class="text-input" id="textInput" placeholder="직접 입력하기 (예: 강남역 가는 길)" />
-    <button class="send-btn" onclick="sendTextFromInput()">➤</button>
-  </div>
+<!-- Favorites Panel -->
+<div class="panel" id="panel-fav">
+  <div class="fav-panel" id="favPanel"></div>
 </div>
 
 <!-- Toast -->
@@ -439,6 +415,7 @@
     <h2>⚙️ 설정</h2>
     <label>n8n Webhook URL</label>
     <input type="url" id="webhookInput" placeholder="https://your-n8n.com/webhook/map-search" />
+    <div class="modal-note">n8n 워크플로우 활성화 후 Webhook URL을 복사해 붙여넣으세요.</div>
     <div class="modal-actions">
       <button class="btn-secondary" onclick="closeConfig()">취소</button>
       <button class="btn-primary" onclick="saveConfig()">저장</button>
@@ -447,365 +424,413 @@
 </div>
 
 <script>
-  // ========================
-  // CONFIG
-  // ========================
-  const CONFIG = {
-    // Set your n8n webhook URL here or via the settings button
-    webhookUrl: localStorage.getItem('webhookUrl') || 'YOUR_N8N_WEBHOOK_URL_HERE',
+// ========================
+// CONFIG & STATE
+// ========================
+const CONFIG = {
+  webhookUrl: localStorage.getItem('webhookUrl') || '',
+};
+
+let currentLocation = null;
+let transportMode = 'transit';
+let isRecording = false;
+let recognition = null;
+
+// ========================
+// GEOLOCATION
+// ========================
+function initLocation() {
+  if (!navigator.geolocation) {
+    setLocStatus('위치 서비스 미지원 (기본값 사용)', 'err');
+    currentLocation = { lat: 37.5665, lng: 126.9780 };
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      currentLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+      setLocStatus('위치 확인됨 (' + currentLocation.lat.toFixed(4) + ', ' + currentLocation.lng.toFixed(4) + ')', 'ok');
+    },
+    () => {
+      setLocStatus('위치 권한 없음 (서울시청 기준)', 'err');
+      currentLocation = { lat: 37.5665, lng: 126.9780 };
+    },
+    { enableHighAccuracy: true, timeout: 10000 }
+  );
+}
+
+function setLocStatus(msg, type) {
+  document.getElementById('locStatus').textContent = msg;
+  document.getElementById('locDot').className = 'loc-dot' + (type ? ' ' + type : '');
+}
+
+// ========================
+// TABS
+// ========================
+function switchTab(tab) {
+  document.getElementById('tab-chat').classList.toggle('active', tab === 'chat');
+  document.getElementById('tab-fav').classList.toggle('active', tab === 'fav');
+  document.getElementById('panel-chat').classList.toggle('active', tab === 'chat');
+  document.getElementById('panel-fav').classList.toggle('active', tab === 'fav');
+  if (tab === 'fav') renderFavorites();
+}
+
+// ========================
+// TRANSPORT MODE
+// ========================
+function setTransport(mode) {
+  transportMode = mode;
+  document.getElementById('btn-transit').classList.toggle('active', mode === 'transit');
+  document.getElementById('btn-car').classList.toggle('active', mode === 'car');
+}
+
+// ========================
+// SPEECH RECOGNITION
+// ========================
+function toggleRecording() {
+  if (isRecording) { stopRecording(); } else { startRecording(); }
+}
+
+function startRecording() {
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    showToast('이 브라우저는 음성 인식을 지원하지 않습니다. 직접 입력해주세요.');
+    return;
+  }
+  recognition = new SR();
+  recognition.lang = 'ko-KR';
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
+
+  recognition.onstart = function() {
+    isRecording = true;
+    document.getElementById('micBtn').classList.add('recording');
+    document.getElementById('micBtn').textContent = '⏹';
+    document.getElementById('micHint').textContent = '듣고 있어요... (다시 누르면 중지)';
+    document.getElementById('micHint').classList.add('recording');
   };
+  recognition.onresult = function(e) { sendText(e.results[0][0].transcript); };
+  recognition.onerror = function(e) {
+    stopRecording();
+    var msgs = { 'not-allowed': '마이크 권한을 허용해주세요.', 'no-speech': '음성이 감지되지 않았습니다.' };
+    showToast(msgs[e.error] || '음성 인식 오류: ' + e.error);
+  };
+  recognition.onend = function() { stopRecording(); };
+  recognition.start();
+}
 
-  let currentLocation = null;
-  let transportMode = 'transit';
-  let isRecording = false;
-  let recognition = null;
+function stopRecording() {
+  isRecording = false;
+  if (recognition) { try { recognition.stop(); } catch(e) {} recognition = null; }
+  document.getElementById('micBtn').classList.remove('recording');
+  document.getElementById('micBtn').textContent = '🎤';
+  document.getElementById('micHint').textContent = '버튼을 누르고 말씀하세요';
+  document.getElementById('micHint').classList.remove('recording');
+}
 
-  // ========================
-  // GEOLOCATION
-  // ========================
-  function initLocation() {
-    if (!navigator.geolocation) {
-      setLocStatus('위치 서비스 미지원', 'err');
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      pos => {
-        currentLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-        setLocStatus('위치 확인됨 (' + currentLocation.lat.toFixed(4) + ', ' + currentLocation.lng.toFixed(4) + ')', 'ok');
-      },
-      err => {
-        setLocStatus('위치 권한 없음 (기본값 사용)', 'err');
-        // Seoul City Hall as fallback
-        currentLocation = { lat: 37.5665, lng: 126.9780 };
-      },
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
+// ========================
+// SEND TEXT
+// ========================
+function sendTextFromInput() {
+  var input = document.getElementById('textInput');
+  var text = input.value.trim();
+  if (text) { input.value = ''; sendText(text); }
+}
+
+document.getElementById('textInput').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') sendTextFromInput();
+});
+
+function sendText(text) {
+  hideEmptyState();
+  addUserMessage(text);
+
+  if (!CONFIG.webhookUrl) {
+    addBotMessage('설정이 필요합니다. 오른쪽 상단 ⚙️ 버튼을 눌러 n8n Webhook URL을 입력해주세요.');
+    showToast('Webhook URL을 설정해주세요.');
+    return;
   }
 
-  function setLocStatus(msg, type) {
-    document.getElementById('locStatus').textContent = msg;
-    var dot = document.getElementById('locDot');
-    dot.className = 'loc-dot' + (type ? ' ' + type : '');
-  }
-
-  // ========================
-  // TRANSPORT MODE
-  // ========================
-  function setTransport(mode) {
-    transportMode = mode;
-    document.getElementById('btn-transit').classList.toggle('active', mode === 'transit');
-    document.getElementById('btn-car').classList.toggle('active', mode === 'car');
-  }
-
-  // ========================
-  // SPEECH RECOGNITION
-  // ========================
-  function toggleRecording() {
-    if (isRecording) {
-      stopRecording();
-    } else {
-      startRecording();
-    }
-  }
-
-  function startRecording() {
-    var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      showToast('이 브라우저는 음성 인식을 지원하지 않습니다. 직접 입력해주세요.');
-      return;
-    }
-
-    recognition = new SpeechRecognition();
-    recognition.lang = 'ko-KR';
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
-
-    recognition.onstart = function() {
-      isRecording = true;
-      document.getElementById('micBtn').classList.add('recording');
-      document.getElementById('micBtn').textContent = '⏹';
-      document.getElementById('micHint').textContent = '듣고 있어요... (다시 누르면 중지)';
-      document.getElementById('micHint').classList.add('recording');
-    };
-
-    recognition.onresult = function(event) {
-      var transcript = event.results[0][0].transcript;
-      sendText(transcript);
-    };
-
-    recognition.onerror = function(event) {
-      stopRecording();
-      if (event.error === 'not-allowed') {
-        showToast('마이크 권한을 허용해주세요.');
-      } else if (event.error === 'no-speech') {
-        showToast('음성이 감지되지 않았습니다. 다시 시도해주세요.');
-      } else {
-        showToast('음성 인식 오류: ' + event.error);
-      }
-    };
-
-    recognition.onend = function() {
-      stopRecording();
-    };
-
-    recognition.start();
-  }
-
-  function stopRecording() {
-    isRecording = false;
-    if (recognition) {
-      try { recognition.stop(); } catch(e) {}
-      recognition = null;
-    }
-    document.getElementById('micBtn').classList.remove('recording');
-    document.getElementById('micBtn').textContent = '🎤';
-    document.getElementById('micHint').textContent = '버튼을 누르고 말씀하세요';
-    document.getElementById('micHint').classList.remove('recording');
-  }
-
-  // ========================
-  // SEND TEXT
-  // ========================
-  function sendTextFromInput() {
-    var input = document.getElementById('textInput');
-    var text = input.value.trim();
-    if (text) {
-      input.value = '';
-      sendText(text);
-    }
-  }
-
-  document.getElementById('textInput').addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') sendTextFromInput();
-  });
-
-  function sendText(text) {
-    hideEmptyState();
-    addUserMessage(text);
-
-    if (!CONFIG.webhookUrl || CONFIG.webhookUrl === 'YOUR_N8N_WEBHOOK_URL_HERE') {
-      showToast('설정 버튼을 눌러 n8n Webhook URL을 설정해주세요.');
-      addBotMessage('설정이 필요합니다. 오른쪽 상단 ⚙️ 버튼을 눌러 n8n Webhook URL을 입력해주세요.');
-      return;
-    }
-
-    var loadingId = addLoadingMessage();
-
-    var payload = {
-      text: text,
+  var loadingId = addLoadingMessage();
+  fetch(CONFIG.webhookUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      text,
       lat: currentLocation ? currentLocation.lat : 37.5665,
       lng: currentLocation ? currentLocation.lng : 126.9780,
-      transportMode: transportMode,
-    };
+      transportMode,
+    }),
+  })
+  .then(function(r) {
+    if (!r.ok) throw new Error('서버 오류 ' + r.status);
+    return r.json();
+  })
+  .then(function(data) {
+    removeMessage(loadingId);
+    var candidates = data.candidates || (Array.isArray(data) ? data : []);
+    var mode = data.transportMode || transportMode;
+    var dest = data.destination || '';
 
-    fetch(CONFIG.webhookUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    })
-    .then(function(response) {
-      if (!response.ok) throw new Error('서버 오류: ' + response.status);
-      return response.json();
-    })
-    .then(function(data) {
-      removeMessage(loadingId);
-
-      if (!data || (Array.isArray(data) && data.length === 0)) {
-        addBotMessage('검색 결과가 없습니다. 다른 목적지를 말씀해주세요.');
-        return;
-      }
-
-      var candidates = Array.isArray(data) ? data : (data.candidates || data.results || [data]);
-      if (candidates.length === 0) {
-        addBotMessage('검색 결과가 없습니다. 다른 목적지를 말씀해주세요.');
-        return;
-      }
-
+    if (mode !== transportMode) setTransport(mode);
+    if (candidates.length === 0) {
+      addBotMessage('검색 결과가 없습니다. 다른 목적지를 말씀해주세요.');
+    } else {
+      if (dest) addBotMessage('"' + dest + '" 검색 결과예요. (' + (mode === 'transit' ? '대중교통' : '자동차') + ')');
       showCandidates(candidates);
-    })
-    .catch(function(err) {
-      removeMessage(loadingId);
-      addBotMessage('오류가 발생했습니다: ' + err.message);
-      showToast('네트워크 오류가 발생했습니다.');
-      console.error(err);
-    });
-  }
+    }
+  })
+  .catch(function(err) {
+    removeMessage(loadingId);
+    addBotMessage('오류가 발생했습니다: ' + err.message);
+    showToast('네트워크 오류가 발생했습니다.');
+  });
+}
 
-  // ========================
-  // CHAT UI
-  // ========================
-  function hideEmptyState() {
-    var el = document.getElementById('emptyState');
-    if (el) el.style.display = 'none';
-  }
+// ========================
+// CHAT UI
+// ========================
+function hideEmptyState() {
+  var el = document.getElementById('emptyState');
+  if (el) el.style.display = 'none';
+}
 
-  function addUserMessage(text) {
-    var chatArea = document.getElementById('chatArea');
-    var now = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
-    var el = document.createElement('div');
-    el.className = 'message user';
-    el.innerHTML = '<div class="bubble">' + escHtml(text) + '</div><div class="message-time">' + now + '</div>';
-    chatArea.appendChild(el);
-    scrollToBottom();
-  }
+function addUserMessage(text) {
+  var now = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+  var el = document.createElement('div');
+  el.className = 'message user';
+  el.innerHTML = '<div class="bubble">' + escHtml(text) + '</div><div class="message-time">' + now + '</div>';
+  document.getElementById('chatArea').appendChild(el);
+  scrollToBottom();
+}
 
-  function addBotMessage(text) {
-    var chatArea = document.getElementById('chatArea');
-    var el = document.createElement('div');
-    el.className = 'message bot';
-    el.innerHTML = '<div class="bubble">' + escHtml(text) + '</div>';
-    chatArea.appendChild(el);
-    scrollToBottom();
-  }
+function addBotMessage(text) {
+  var el = document.createElement('div');
+  el.className = 'message bot';
+  el.innerHTML = '<div class="bubble">' + escHtml(text) + '</div>';
+  document.getElementById('chatArea').appendChild(el);
+  scrollToBottom();
+}
 
-  function addLoadingMessage() {
-    var chatArea = document.getElementById('chatArea');
-    var id = 'loading-' + Date.now();
-    var el = document.createElement('div');
-    el.className = 'message bot';
-    el.id = id;
-    el.innerHTML = '<div class="loading-bubble"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
-    chatArea.appendChild(el);
-    scrollToBottom();
-    return id;
-  }
+function addLoadingMessage() {
+  var id = 'loading-' + Date.now();
+  var el = document.createElement('div');
+  el.className = 'message bot'; el.id = id;
+  el.innerHTML = '<div class="loading-bubble"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
+  document.getElementById('chatArea').appendChild(el);
+  scrollToBottom();
+  return id;
+}
 
-  function removeMessage(id) {
-    var el = document.getElementById(id);
-    if (el) el.remove();
-  }
+function removeMessage(id) {
+  var el = document.getElementById(id);
+  if (el) el.remove();
+}
 
-  function showCandidates(candidates) {
-    var chatArea = document.getElementById('chatArea');
-    var wrapper = document.createElement('div');
-    wrapper.className = 'message bot';
-    wrapper.style.maxWidth = '100%';
-    wrapper.style.width = '100%';
+function showCandidates(candidates) {
+  var wrapper = document.createElement('div');
+  wrapper.className = 'message bot';
+  wrapper.style.cssText = 'max-width:100%;width:100%;';
 
-    var inner = document.createElement('div');
-    inner.className = 'candidates-wrapper';
-    inner.innerHTML = '<div class="candidates-title">📍 ' + candidates.length + '개의 장소를 찾았어요. 선택해주세요:</div>';
+  var inner = document.createElement('div');
+  inner.className = 'candidates-wrapper';
+  inner.innerHTML = '<div class="candidates-title">📍 ' + candidates.length + '곳을 찾았어요. 선택해주세요:</div>';
 
-    candidates.forEach(function(place, i) {
-      var card = document.createElement('div');
-      card.className = 'candidate-card';
-      card.innerHTML =
-        '<div class="card-header">' +
-          '<div class="card-num">' + (i + 1) + '</div>' +
-          '<div class="card-info">' +
-            '<div class="card-name">' + escHtml(place.name || '이름 없음') + '</div>' +
-            '<div class="card-address">' + escHtml(place.address || place.roadAddress || '') + '</div>' +
-          '</div>' +
+  candidates.forEach(function(place) {
+    var isFav = isFavorite(place.lat, place.lng);
+    var card = document.createElement('div');
+    card.className = 'candidate-card';
+    card.dataset.lat = place.lat;
+    card.dataset.lng = place.lng;
+    card.dataset.name = place.name || '';
+    card.dataset.address = place.address || '';
+    card.dataset.category = place.category || '';
+
+    card.innerHTML =
+      '<div class="card-row1">' +
+        '<div class="card-num">' + place.index + '</div>' +
+        '<div class="card-info">' +
+          '<div class="card-name">' + escHtml(place.name || '이름 없음') + '</div>' +
+          '<div class="card-address">' + escHtml(place.address || '') + '</div>' +
         '</div>' +
-        '<div class="card-meta">' +
-          '<span class="card-category">' + escHtml(place.category || '') + '</span>' +
-          '<button class="card-select-btn" onclick="navigateTo(' + place.lat + ', ' + place.lng + ', \'' + escAttr(place.name || '') + '\')">길찾기 →</button>' +
-        '</div>';
-      inner.appendChild(card);
-    });
-
-    wrapper.appendChild(inner);
-    chatArea.appendChild(wrapper);
-    scrollToBottom();
-  }
-
-  // ========================
-  // NAVIGATION DEEPLINK
-  // ========================
-  function navigateTo(dlat, dlng, dname) {
-    var slat = currentLocation ? currentLocation.lat : '';
-    var slng = currentLocation ? currentLocation.lng : '';
-    var sname = '현재위치';
-    var appname = 'com.example.mapservice';
-    var encodedName = encodeURIComponent(dname);
-    var encodedSname = encodeURIComponent(sname);
-
-    var naverAppUrl, webUrl;
-    if (transportMode === 'transit') {
-      naverAppUrl = 'nmap://route/public?slat=' + slat + '&slng=' + slng + '&sname=' + encodedSname + '&dlat=' + dlat + '&dlng=' + dlng + '&dname=' + encodedName + '&appname=' + appname;
-      webUrl = 'https://map.naver.com/v5/directions/-/' + dlng + ',' + dlat + ',' + encodedName + ',-/transit?c=15,0,0,0,dh';
-    } else {
-      naverAppUrl = 'nmap://route/car?slat=' + slat + '&slng=' + slng + '&sname=' + encodedSname + '&dlat=' + dlat + '&dlng=' + dlng + '&dname=' + encodedName + '&appname=' + appname;
-      webUrl = 'https://map.naver.com/v5/directions/-/' + dlng + ',' + dlat + ',' + encodedName + ',-/car?c=15,0,0,0,dh';
-    }
-
-    // Try app deeplink on mobile, fallback to web URL
-    var isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-    if (isMobile) {
-      var fallbackTimer = setTimeout(function() {
-        window.open(webUrl, '_blank');
-      }, 1500);
-
-      var iframe = document.createElement('iframe');
-      iframe.style.display = 'none';
-      iframe.src = naverAppUrl;
-      document.body.appendChild(iframe);
-
-      window.addEventListener('blur', function() { clearTimeout(fallbackTimer); }, { once: true });
-    } else {
-      window.open(webUrl, '_blank');
-    }
-
-    addBotMessage('"' + dname + '" 길찾기를 시작합니다! (' + (transportMode === 'transit' ? '대중교통' : '자동차') + ')');
-  }
-
-  // ========================
-  // CONFIG MODAL
-  // ========================
-  function openConfig() {
-    document.getElementById('webhookInput').value = (CONFIG.webhookUrl !== 'YOUR_N8N_WEBHOOK_URL_HERE') ? CONFIG.webhookUrl : '';
-    document.getElementById('configModal').classList.add('open');
-  }
-
-  function closeConfig() {
-    document.getElementById('configModal').classList.remove('open');
-  }
-
-  function saveConfig() {
-    var url = document.getElementById('webhookInput').value.trim();
-    if (url) {
-      CONFIG.webhookUrl = url;
-      localStorage.setItem('webhookUrl', url);
-      showToast('Webhook URL이 저장되었습니다.');
-    }
-    closeConfig();
-  }
-
-  document.getElementById('configModal').addEventListener('click', function(e) {
-    if (e.target === document.getElementById('configModal')) closeConfig();
+        '<button class="card-star" onclick="toggleFavoriteFromCard(this)" title="즐겨찾기">' + (isFav ? '⭐' : '☆') + '</button>' +
+      '</div>' +
+      '<div class="card-row2">' +
+        '<div class="card-tags">' +
+          (place.category ? '<span class="card-category">' + escHtml(place.category) + '</span>' : '') +
+          (place.distanceLabel ? '<span class="card-distance">📍 ' + place.distanceLabel + '</span>' : '') +
+        '</div>' +
+        '<button class="card-select-btn" onclick="navigateTo(' + place.lat + ',' + place.lng + ',\'' + escAttr(place.name || '') + '\')">길찾기 →</button>' +
+      '</div>';
+    inner.appendChild(card);
   });
 
-  // ========================
-  // HELPERS
-  // ========================
-  function scrollToBottom() {
-    var chatArea = document.getElementById('chatArea');
-    chatArea.scrollTop = chatArea.scrollHeight;
+  wrapper.appendChild(inner);
+  document.getElementById('chatArea').appendChild(wrapper);
+  scrollToBottom();
+}
+
+// ========================
+// NAVIGATION DEEPLINK
+// ========================
+function navigateTo(dlat, dlng, dname, mode) {
+  mode = mode || transportMode;
+  var slat = currentLocation ? currentLocation.lat : '';
+  var slng = currentLocation ? currentLocation.lng : '';
+  var appname = 'com.example.mapservice';
+  var enc = encodeURIComponent;
+
+  var appUrl = mode === 'transit'
+    ? 'nmap://route/public?slat=' + slat + '&slng=' + slng + '&sname=' + enc('현재위치') + '&dlat=' + dlat + '&dlng=' + dlng + '&dname=' + enc(dname) + '&appname=' + appname
+    : 'nmap://route/car?slat=' + slat + '&slng=' + slng + '&sname=' + enc('현재위치') + '&dlat=' + dlat + '&dlng=' + dlng + '&dname=' + enc(dname) + '&appname=' + appname;
+
+  var webUrl = mode === 'transit'
+    ? 'https://map.naver.com/v5/directions/-/' + dlng + ',' + dlat + ',' + enc(dname) + ',-/transit?c=15,0,0,0,dh'
+    : 'https://map.naver.com/v5/directions/-/' + dlng + ',' + dlat + ',' + enc(dname) + ',-/car?c=15,0,0,0,dh';
+
+  var isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  if (isMobile) {
+    var timer = setTimeout(function() { window.open(webUrl, '_blank'); }, 1500);
+    var iframe = document.createElement('iframe');
+    iframe.style.display = 'none';
+    iframe.src = appUrl;
+    document.body.appendChild(iframe);
+    window.addEventListener('blur', function() { clearTimeout(timer); }, { once: true });
+  } else {
+    window.open(webUrl, '_blank');
   }
 
-  function escHtml(str) {
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
+  addBotMessage('"' + dname + '" 길찾기를 시작합니다! (' + (mode === 'transit' ? '대중교통 🚇' : '자동차 🚗') + ')');
+}
+
+// ========================
+// FAVORITES
+// ========================
+function getFavorites() {
+  try { return JSON.parse(localStorage.getItem('favorites') || '[]'); } catch(e) { return []; }
+}
+
+function saveFavorites(favs) {
+  localStorage.setItem('favorites', JSON.stringify(favs));
+  updateFavCount();
+}
+
+function isFavorite(lat, lng) {
+  return getFavorites().some(function(f) { return Math.abs(f.lat - lat) < 0.0001 && Math.abs(f.lng - lng) < 0.0001; });
+}
+
+function toggleFavoriteFromCard(btn) {
+  var card = btn.closest('.candidate-card');
+  var lat = parseFloat(card.dataset.lat);
+  var lng = parseFloat(card.dataset.lng);
+  var name = card.dataset.name;
+  var address = card.dataset.address;
+  var category = card.dataset.category;
+
+  var favs = getFavorites();
+  var idx = favs.findIndex(function(f) { return Math.abs(f.lat - lat) < 0.0001 && Math.abs(f.lng - lng) < 0.0001; });
+  if (idx >= 0) {
+    favs.splice(idx, 1);
+    btn.textContent = '☆';
+    showToast('"' + name + '" 즐겨찾기에서 삭제했습니다.');
+  } else {
+    favs.unshift({ lat, lng, name, address, category, savedAt: Date.now() });
+    btn.textContent = '⭐';
+    showToast('"' + name + '" 즐겨찾기에 추가했습니다. ⭐');
+  }
+  saveFavorites(favs);
+}
+
+function removeFavorite(lat, lng) {
+  var favs = getFavorites().filter(function(f) { return !(Math.abs(f.lat - lat) < 0.0001 && Math.abs(f.lng - lng) < 0.0001); });
+  saveFavorites(favs);
+  renderFavorites();
+  showToast('즐겨찾기에서 삭제했습니다.');
+}
+
+function renderFavorites() {
+  var panel = document.getElementById('favPanel');
+  var favs = getFavorites();
+  panel.innerHTML = '';
+
+  if (favs.length === 0) {
+    panel.innerHTML = '<div class="fav-empty"><div class="big-icon">⭐</div><p>즐겨찾기가 비어있어요.<br>검색 결과에서 ☆ 버튼을 눌러<br>자주 가는 곳을 저장하세요.</p></div>';
+    return;
   }
 
-  function escAttr(str) {
-    return String(str).replace(/'/g, "\\'").replace(/"/g, '\\"');
-  }
+  favs.forEach(function(f) {
+    var item = document.createElement('div');
+    item.className = 'fav-item';
+    item.innerHTML =
+      '<div class="fav-row1">' +
+        '<div class="fav-icon">📍</div>' +
+        '<div class="fav-info">' +
+          '<div class="fav-name">' + escHtml(f.name) + '</div>' +
+          '<div class="fav-address">' + escHtml(f.address || '') + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="fav-row2">' +
+        '<button class="fav-transit-btn" onclick="navigateTo(' + f.lat + ',' + f.lng + ',\'' + escAttr(f.name) + '\',\'transit\')">🚇 대중교통</button>' +
+        '<button class="fav-car-btn" onclick="navigateTo(' + f.lat + ',' + f.lng + ',\'' + escAttr(f.name) + '\',\'car\')">🚗 자동차</button>' +
+        '<button class="fav-delete-btn" onclick="removeFavorite(' + f.lat + ',' + f.lng + ')">🗑</button>' +
+      '</div>';
+    panel.appendChild(item);
+  });
+}
 
-  function showToast(msg) {
-    var t = document.getElementById('toast');
-    t.textContent = msg;
-    t.classList.add('show');
-    setTimeout(function() { t.classList.remove('show'); }, 3000);
-  }
+function updateFavCount() {
+  var count = getFavorites().length;
+  document.getElementById('fav-count').textContent = count > 0 ? '(' + count + ')' : '';
+}
 
-  // ========================
-  // INIT
-  // ========================
-  initLocation();
+// ========================
+// CONFIG MODAL
+// ========================
+function openConfig() {
+  document.getElementById('webhookInput').value = CONFIG.webhookUrl;
+  document.getElementById('configModal').classList.add('open');
+}
+function closeConfig() {
+  document.getElementById('configModal').classList.remove('open');
+}
+function saveConfig() {
+  var url = document.getElementById('webhookInput').value.trim();
+  CONFIG.webhookUrl = url;
+  localStorage.setItem('webhookUrl', url);
+  showToast(url ? 'Webhook URL이 저장되었습니다.' : 'Webhook URL을 삭제했습니다.');
+  closeConfig();
+}
+document.getElementById('configModal').addEventListener('click', function(e) {
+  if (e.target === this) closeConfig();
+});
+
+// ========================
+// HELPERS
+// ========================
+function scrollToBottom() {
+  var c = document.getElementById('chatArea');
+  c.scrollTop = c.scrollHeight;
+}
+
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function escAttr(str) {
+  return String(str).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+}
+
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, 3000);
+}
+
+// ========================
+// INIT
+// ========================
+initLocation();
+updateFavCount();
 </script>
 </body>
 </html>

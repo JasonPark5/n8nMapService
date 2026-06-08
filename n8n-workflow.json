@@ -19,30 +19,86 @@
     },
     {
       "parameters": {
-        "jsCode": "// Parse destination and transport mode from Korean text\nconst body = $input.first().json.body || $input.first().json;\nconst text = body.text || '';\nconst userLat = body.lat || 37.5665;\nconst userLng = body.lng || 126.9780;\nconst userTransportMode = body.transportMode || 'transit';\n\nconsole.log('Input text:', text);\n\n// Detect transport mode from text\nlet transportMode = userTransportMode;\nif (/대중교통|버스|지하철|전철|기차|KTX|SRT/.test(text)) {\n  transportMode = 'transit';\n} else if (/자동차|차로|드라이브|운전|차량/.test(text)) {\n  transportMode = 'car';\n}\n\n// Extract destination from Korean patterns\nlet destination = text;\n\n// Remove common navigation phrases\nconst patterns = [\n  /(.+?)(?:으로|로)\\s*(?:가기|가는\\s*길|길찾기|안내)/,\n  /(.+?)(?:에|까지)\\s*(?:가기|가는\\s*길|길찾기|안내)/,\n  /(.+?)\\s*(?:가는\\s*길)/,\n  /(.+?)\\s*(?:찾아줘|찾아주세요|알려줘|알려주세요)/,\n  /(.+?)(?:으로|로|에|까지)\\s*(?:대중교통|자동차|버스|지하철)/,\n  /(?:대중교통으로|자동차로|버스로|지하철로)?\\s*(.+?)(?:으로|로|에|까지)?\\s*(?:가기|가자|갈래|가고\\s*싶어)/,\n  /(.+?)\\s*(?:어떻게\\s*가|어떻게\\s*가요|가는\\s*방법)/,\n];\n\nfor (const pattern of patterns) {\n  const match = text.match(pattern);\n  if (match && match[1]) {\n    destination = match[1].trim();\n    // Remove leading transport mode words\n    destination = destination.replace(/^(?:대중교통으로|자동차로|버스로|지하철로|도보로)\\s*/, '').trim();\n    break;\n  }\n}\n\n// Clean up destination: remove extra whitespace\ndestination = destination.replace(/\\s+/g, ' ').trim();\n\n// If destination is still too long or unchanged, try to extract key noun\nif (destination === text && text.length > 20) {\n  // Fallback: just use the text as-is (Naver API can handle natural language)\n  destination = text;\n}\n\nconsole.log('Extracted destination:', destination, '| Transport:', transportMode);\n\nreturn [\n  {\n    json: {\n      destination,\n      transportMode,\n      userLat,\n      userLng,\n      originalText: text,\n    },\n  },\n];"
+        "jsCode": "// Prepare input data for Claude API\nconst body = $input.first().json.body || $input.first().json;\nconst text = body.text || '';\nconst userLat = parseFloat(body.lat) || 37.5665;\nconst userLng = parseFloat(body.lng) || 126.9780;\nconst userTransportMode = body.transportMode || 'transit';\n\nreturn [{\n  json: {\n    text,\n    userLat,\n    userLng,\n    userTransportMode,\n  }\n}];"
       },
-      "id": "parse-destination",
-      "name": "목적지 추출",
+      "id": "prepare-input",
+      "name": "입력 준비",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [460, 300]
     },
     {
       "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{ $credentials.password }}"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": []
+        },
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-haiku-4-5-20251001\",\n  \"max_tokens\": 256,\n  \"system\": \"You are a Korean navigation assistant. Extract the destination place name and transport mode from the user's Korean input.\\n\\nRespond ONLY with a JSON object (no markdown, no explanation):\\n{\\\"destination\\\": \\\"<place name in Korean>\\\", \\\"transportMode\\\": \\\"transit\\\" or \\\"car\\\"}\\n\\nRules:\\n- destination: Extract only the place/location name (e.g. 강남역, 스타벅스 홍대점, 경복궁)\\n- transportMode: 'transit' for 대중교통/버스/지하철, 'car' for 자동차/차, default to the provided mode\\n- If the user says 대중교통/지하철/버스 → transit\\n- If the user says 자동차/차로/드라이브 → car\\n- Otherwise use the provided default mode\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Input text: {{ $json.text }}\\nDefault transport mode: {{ $json.userTransportMode }}\"\n    }\n  ]\n}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "claude-nlp",
+      "name": "Claude NLP",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [680, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "claude-api-credentials",
+          "name": "Claude API"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse Claude response, fallback to regex if Claude failed\nconst claudeOutput = $input.first().json;\nconst inputData = $('입력 준비').first().json;\n\nlet destination = inputData.text;\nlet transportMode = inputData.userTransportMode;\n\n// Try to parse Claude's response\ntry {\n  const content = claudeOutput?.content?.[0]?.text || '';\n  if (content) {\n    const parsed = JSON.parse(content.trim());\n    if (parsed.destination) destination = parsed.destination;\n    if (parsed.transportMode) transportMode = parsed.transportMode;\n    console.log('Claude parsed:', parsed);\n  }\n} catch (e) {\n  console.log('Claude parsing failed, using regex fallback:', e.message);\n\n  // Regex fallback\n  const text = inputData.text;\n  if (/대중교통|버스|지하철|전철|기차|KTX|SRT/.test(text)) transportMode = 'transit';\n  else if (/자동차|차로|드라이브|운전|차량/.test(text)) transportMode = 'car';\n\n  const patterns = [\n    /(.+?)(?:으로|로)\\s*(?:가기|가는\\s*길|길찾기|안내)/,\n    /(.+?)(?:에|까지)\\s*(?:가기|가는\\s*길|길찾기|안내)/,\n    /(.+?)\\s*(?:가는\\s*길)/,\n    /(.+?)\\s*(?:찾아줘|찾아주세요|알려줘|알려주세요)/,\n    /(?:대중교통으로|자동차로|버스로|지하철로)?\\s*(.+?)(?:으로|로|에|까지)?\\s*(?:가기|가자|갈래|가고\\s*싶어)/,\n  ];\n  for (const pattern of patterns) {\n    const match = text.match(pattern);\n    if (match && match[1]) {\n      destination = match[1].replace(/^(?:대중교통으로|자동차로|버스로|지하철로|도보로)\\s*/, '').trim();\n      break;\n    }\n  }\n}\n\nconsole.log('Final:', { destination, transportMode });\n\nreturn [{\n  json: {\n    destination,\n    transportMode,\n    userLat: inputData.userLat,\n    userLng: inputData.userLng,\n    originalText: inputData.text,\n  }\n}];"
+      },
+      "id": "parse-claude-response",
+      "name": "목적지 파싱",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
         "method": "GET",
         "url": "https://openapi.naver.com/v1/search/local.json",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "X-Naver-Client-Id",
-              "value": "={{ $credentials.name }}"
+              "value": "={{ $credentials.username }}"
             },
             {
               "name": "X-Naver-Client-Secret",
-              "value": "={{ $credentials.value }}"
+              "value": "={{ $credentials.password }}"
             }
           ]
         },
@@ -79,23 +135,23 @@
       "name": "네이버 지역 검색",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
-      "position": [680, 300],
+      "position": [1120, 300],
       "credentials": {
-        "httpHeaderAuth": {
+        "httpBasicAuth": {
           "id": "naver-api-credentials",
-          "name": "Naver API"
+          "name": "Naver Search API"
         }
       }
     },
     {
       "parameters": {
-        "jsCode": "// Format Naver Local Search API results\nconst data = $input.first().json;\nconst prevData = $('목적지 추출').first().json;\n\nif (!data || !data.items || data.items.length === 0) {\n  return [{ json: [] }];\n}\n\n/**\n * Convert Naver Local Search API coordinates to WGS84\n * Naver Local Search returns mapx/mapy as integer strings\n * where mapx = longitude * 10^7 and mapy = latitude * 10^7\n */\nfunction convertCoords(mapx, mapy) {\n  const lng = parseInt(mapx) / 10000000;\n  const lat = parseInt(mapy) / 10000000;\n  return { lat, lng };\n}\n\n/**\n * Strip HTML tags from Naver API response\n * (Naver wraps matched text in <b> tags)\n */\nfunction stripHtml(str) {\n  return (str || '').replace(/<[^>]*>/g, '');\n}\n\nconst results = data.items.map((item, index) => {\n  const { lat, lng } = convertCoords(item.mapx, item.mapy);\n  return {\n    index: index + 1,\n    name: stripHtml(item.title),\n    address: stripHtml(item.address) || stripHtml(item.roadAddress),\n    roadAddress: stripHtml(item.roadAddress),\n    jibunAddress: stripHtml(item.address),\n    category: stripHtml(item.category),\n    telephone: item.telephone || '',\n    link: item.link || '',\n    lat,\n    lng,\n  };\n});\n\nconsole.log('Formatted results:', JSON.stringify(results, null, 2));\n\nreturn [{ json: results }];"
+        "jsCode": "// Format Naver Local Search results and attach metadata\nconst data = $input.first().json;\nconst parsedData = $('목적지 파싱').first().json;\n\nif (!data || !data.items || data.items.length === 0) {\n  return [{ json: { candidates: [], destination: parsedData.destination, transportMode: parsedData.transportMode } }];\n}\n\nfunction convertCoords(mapx, mapy) {\n  return {\n    lat: parseInt(mapy) / 10000000,\n    lng: parseInt(mapx) / 10000000,\n  };\n}\n\nfunction stripHtml(str) {\n  return (str || '').replace(/<[^>]*>/g, '');\n}\n\n// Haversine distance in meters\nfunction haversine(lat1, lng1, lat2, lng2) {\n  const R = 6371000;\n  const toRad = d => d * Math.PI / 180;\n  const dLat = toRad(lat2 - lat1);\n  const dLng = toRad(lng2 - lng1);\n  const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng/2)**2;\n  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));\n}\n\nconst userLat = parsedData.userLat || 37.5665;\nconst userLng = parsedData.userLng || 126.9780;\n\nconst candidates = data.items.map((item, index) => {\n  const { lat, lng } = convertCoords(item.mapx, item.mapy);\n  const distanceM = Math.round(haversine(userLat, userLng, lat, lng));\n  const distanceLabel = distanceM < 1000\n    ? distanceM + 'm'\n    : (distanceM / 1000).toFixed(1) + 'km';\n\n  return {\n    index: index + 1,\n    name: stripHtml(item.title),\n    address: stripHtml(item.roadAddress) || stripHtml(item.address),\n    roadAddress: stripHtml(item.roadAddress),\n    jibunAddress: stripHtml(item.address),\n    category: stripHtml(item.category),\n    telephone: item.telephone || '',\n    link: item.link || '',\n    lat,\n    lng,\n    distanceM,\n    distanceLabel,\n  };\n});\n\n// Sort by distance\ncandidates.sort((a, b) => a.distanceM - b.distanceM);\ncandidates.forEach((c, i) => { c.index = i + 1; });\n\nreturn [{\n  json: {\n    candidates,\n    destination: parsedData.destination,\n    transportMode: parsedData.transportMode,\n  }\n}];"
       },
       "id": "format-results",
       "name": "결과 포맷",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [900, 300]
+      "position": [1340, 300]
     },
     {
       "parameters": {
@@ -128,65 +184,35 @@
       "name": "Webhook 응답",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
-      "position": [1120, 300]
+      "position": [1560, 300]
     }
   ],
   "connections": {
     "Webhook": {
-      "main": [
-        [
-          {
-            "node": "목적지 추출",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{ "node": "입력 준비", "type": "main", "index": 0 }]]
     },
-    "목적지 추출": {
-      "main": [
-        [
-          {
-            "node": "네이버 지역 검색",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+    "입력 준비": {
+      "main": [[{ "node": "Claude NLP", "type": "main", "index": 0 }]]
+    },
+    "Claude NLP": {
+      "main": [[{ "node": "목적지 파싱", "type": "main", "index": 0 }]]
+    },
+    "목적지 파싱": {
+      "main": [[{ "node": "네이버 지역 검색", "type": "main", "index": 0 }]]
     },
     "네이버 지역 검색": {
-      "main": [
-        [
-          {
-            "node": "결과 포맷",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{ "node": "결과 포맷", "type": "main", "index": 0 }]]
     },
     "결과 포맷": {
-      "main": [
-        [
-          {
-            "node": "Webhook 응답",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{ "node": "Webhook 응답", "type": "main", "index": 0 }]]
     }
   },
   "settings": {
     "executionOrder": "v1"
   },
   "staticData": null,
-  "tags": [
-    {
-      "name": "지도서비스"
-    }
-  ],
+  "tags": [{ "name": "지도서비스" }],
   "triggerCount": 0,
   "updatedAt": "2026-06-08T00:00:00.000Z",
-  "versionId": "1"
+  "versionId": "2"
 }
