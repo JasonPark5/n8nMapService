@@ -1240,7 +1240,15 @@ document.getElementById('textInput').addEventListener('keydown', function(e) {
   if (e.key === 'Enter') sendTextFromInput();
 });
 
+function clearResults() {
+  var chatArea = document.getElementById('chatArea');
+  var emptyState = document.getElementById('emptyState');
+  while (chatArea.firstChild) chatArea.removeChild(chatArea.firstChild);
+  if (emptyState) chatArea.appendChild(emptyState);
+}
+
 function sendText(text) {
+  clearResults();
   hideEmptyState();
   addUserMessage(text);
 
