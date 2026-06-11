@@ -19,7 +19,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Prepare input data for Claude API\nconst body = $input.first().json.body || $input.first().json;\nconst text = body.text || '';\nconst userLat = parseFloat(body.lat) || 37.5665;\nconst userLng = parseFloat(body.lng) || 126.9780;\nconst userTransportMode = body.transportMode || 'transit';\n\nreturn [{\n  json: {\n    text,\n    userLat,\n    userLng,\n    userTransportMode,\n  }\n}];"
+        "jsCode": "const body = $input.first().json.body || $input.first().json;\nconst text = body.text || '';\nconst userLat = parseFloat(body.lat) || 37.5665;\nconst userLng = parseFloat(body.lng) || 126.9780;\nconst userTransportMode = body.transportMode || 'transit';\nconst locationName = body.locationName || '';\n\n// '근처' 쿼리에 실제 동네명 붙이기 (예: '근처 맛집' → '역삼동 맛집')\nlet enrichedText = text;\nif (locationName && /근처/.test(text)) {\n  enrichedText = text.replace('근처', locationName);\n}\n\nreturn [{\n  json: {\n    text: enrichedText,\n    originalText: text,\n    userLat,\n    userLng,\n    userTransportMode,\n    locationName,\n  }\n}];"
       },
       "id": "prepare-input",
       "name": "입력 준비",

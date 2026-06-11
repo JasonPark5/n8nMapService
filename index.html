@@ -549,6 +549,22 @@
     }
     .fav-delete-btn:hover { background: #fef2f2; color: #ef4444; border-color: #fecaca; }
 
+    /* ─── Quick chips (persistent) ───────────── */
+    .quick-chips {
+      background: var(--card-bg);
+      border-top: 1px solid var(--border);
+      padding: 10px 14px;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+    }
+    .quick-chips .chip {
+      font-size: 11px;
+      padding: 7px 2px;
+      border-radius: 10px;
+    }
+    .quick-chips .chip .chip-icon { font-size: 16px; }
+
     /* ─── Input area ──────────────────────────── */
     .input-area {
       background: var(--card-bg);
@@ -956,6 +972,20 @@
     </div>
   </div>
 
+  <!-- Quick chips (always visible) -->
+  <div class="quick-chips" id="quickChips">
+    <div class="chip" onclick="sendText('근처 맛집')"><span class="chip-icon">🍽️</span>맛집</div>
+    <div class="chip" onclick="sendText('근처 카페')"><span class="chip-icon">☕</span>카페</div>
+    <div class="chip" onclick="sendText('근처 편의점')"><span class="chip-icon">🏪</span>편의점</div>
+    <div class="chip" onclick="sendText('근처 약국')"><span class="chip-icon">💊</span>약국</div>
+    <div class="chip" onclick="sendText('근처 지하철역')"><span class="chip-icon">🚇</span>지하철역</div>
+    <div class="chip" onclick="sendText('근처 주차장')"><span class="chip-icon">🅿️</span>주차장</div>
+    <div class="chip" onclick="sendText('근처 은행')"><span class="chip-icon">🏦</span>은행</div>
+    <div class="chip" onclick="sendText('근처 주유소')"><span class="chip-icon">⛽</span>주유소</div>
+    <div class="chip" onclick="sendText('근처 병원')"><span class="chip-icon">🏥</span>병원</div>
+    <div class="chip" onclick="sendText('근처 마트')"><span class="chip-icon">🛒</span>마트</div>
+  </div>
+
   <!-- Input area -->
   <div class="input-area">
     <div class="location-status">
@@ -1046,6 +1076,7 @@ const CONFIG = {
 };
 
 let currentLocation = null;
+let currentLocationName = '';  // 동네/건물명 (Naver 쿼리 보강용)
 let transportMode = 'transit';
 let isRecording = false;
 let recognition = null;
@@ -1095,12 +1126,13 @@ function fetchNearbyLandmark(lat, lng) {
   .then(function(r) { return r.json(); })
   .then(function(data) {
     var a = data.address || {};
-    var landmark =
-      a.amenity || a.shop || a.office || a.building ||
-      a.road || a.neighbourhood || a.suburb ||
-      a.quarter || a.district || '';
-    if (landmark) {
-      document.getElementById('landmarkText').textContent = landmark + ' 근처';
+    // 표시용: 건물/시설명
+    var display = a.amenity || a.shop || a.office || a.building || a.road || a.neighbourhood || a.suburb || '';
+    // 쿼리 보강용: 동/구 단위 (Naver 검색에 붙일 지역명)
+    var areaName = a.quarter || a.neighbourhood || a.suburb || a.city_district || a.district || a.county || '';
+    currentLocationName = areaName;
+    if (display) {
+      document.getElementById('landmarkText').textContent = display + ' 근처';
       document.getElementById('locationLandmark').style.display = 'block';
     }
   })
@@ -1210,6 +1242,7 @@ function sendText(text) {
       lat: currentLocation ? currentLocation.lat : 37.5665,
       lng: currentLocation ? currentLocation.lng : 126.9780,
       transportMode,
+      locationName: currentLocationName,
     }),
   })
   .then(function(r) {
