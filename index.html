@@ -957,6 +957,7 @@
   </div>
 
   <div class="chat-area" id="chatArea">
+    <!--
     <div class="empty-state" id="emptyState">
       <div class="empty-icon">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -966,6 +967,23 @@
           <line x1="8" y1="23" x2="16" y2="23"/>
         </svg>
       </div>
+      -->
+            <!-- Mic button inside empty state -->
+      <div class="mic-row" style="margin-top:8px;">
+        <div class="mic-wrap" id="micWrap">
+          <div class="mic-ring pulse-ring-1"></div>
+          <div class="mic-ring pulse-ring-2"></div>
+          <button class="mic-btn" id="micBtn" onclick="toggleRecording()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+              <line x1="12" y1="19" x2="12" y2="23"/>
+              <line x1="8" y1="23" x2="16" y2="23"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div class="mic-hint" id="micHint">버튼을 누르고 말씀하세요</div>
       <h2>어디 가실 건가요?</h2>
       <p>마이크 버튼을 누르고<br>목적지를 말씀해 주세요</p>
       <!-- Input area -->
@@ -1010,22 +1028,7 @@
       </div>
       <div class="location-landmark" id="locationLandmark" style="display:none;font-size:11px;color:var(--text-muted);text-align:center;padding-bottom:2px;">📍 <span id="landmarkText"></span></div>
 
-      <!-- Mic button inside empty state -->
-      <div class="mic-row" style="margin-top:8px;">
-        <div class="mic-wrap" id="micWrap">
-          <div class="mic-ring pulse-ring-1"></div>
-          <div class="mic-ring pulse-ring-2"></div>
-          <button class="mic-btn" id="micBtn" onclick="toggleRecording()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
-              <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-              <line x1="12" y1="19" x2="12" y2="23"/>
-              <line x1="8" y1="23" x2="16" y2="23"/>
-            </svg>
-          </button>
-        </div>
-      </div>
-      <div class="mic-hint" id="micHint">버튼을 누르고 말씀하세요</div>
+
     </div>
   </div>
 
