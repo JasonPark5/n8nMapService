@@ -181,11 +181,9 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
       text-align: center;
-      padding: 40px 24px;
+      padding: 28px 16px 20px;
       gap: 12px;
-      flex: 1;
     }
     .empty-icon {
       width: 52px;
@@ -549,30 +547,35 @@
     }
     .fav-delete-btn:hover { background: #fef2f2; color: #ef4444; border-color: #fecaca; }
 
-    /* ─── Quick chips (persistent) ───────────── */
-    .quick-chips {
+    /* ─── Action header (mic + location, always visible) ── */
+    .action-header {
       background: var(--card-bg);
-      border-top: 1px solid var(--border);
-      padding: 10px 14px;
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 6px;
+      border-bottom: 1px solid var(--border);
+      padding: 20px 16px 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
     }
-    .quick-chips .chip {
-      font-size: 11px;
-      padding: 7px 2px;
-      border-radius: 10px;
+    .action-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.3px;
+      margin-top: 4px;
     }
-    .quick-chips .chip .chip-icon { font-size: 16px; }
+    .action-subtitle {
+      font-size: 13px;
+      color: var(--text-secondary);
+      text-align: center;
+      line-height: 1.5;
+    }
 
     /* ─── Input area ──────────────────────────── */
     .input-area {
       background: var(--card-bg);
       border-top: 1px solid var(--border);
-      padding: 14px 16px 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
+      padding: 10px 16px 18px;
       box-shadow: var(--shadow-input);
     }
     .location-status {
@@ -684,7 +687,7 @@
       align-items: center;
       background: var(--bg);
       border-radius: 100px;
-      padding: 5px;
+      padding: 5px 5px 5px 16px;
       border: 1.5px solid var(--border);
       transition: border-color 0.15s;
     }
@@ -956,57 +959,36 @@
     <button class="transport-btn" id="btn-car" onclick="setTransport('car')">🚗 자동차</button>
   </div>
 
-  <div class="chat-area" id="chatArea">
-    <!--
-    <div class="empty-state" id="emptyState">
-      <div class="empty-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
-          <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-          <line x1="12" y1="19" x2="12" y2="23"/>
-          <line x1="8" y1="23" x2="16" y2="23"/>
-        </svg>
+  <!-- Mic + Location (always visible) -->
+  <div class="action-header">
+    <div class="mic-row">
+      <div class="mic-wrap" id="micWrap">
+        <div class="mic-ring pulse-ring-1"></div>
+        <div class="mic-ring pulse-ring-2"></div>
+        <button class="mic-btn" id="micBtn" onclick="toggleRecording()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+            <line x1="12" y1="19" x2="12" y2="23"/>
+            <line x1="8" y1="23" x2="16" y2="23"/>
+          </svg>
+        </button>
       </div>
-      -->
-            <!-- Mic button inside empty state -->
-      <div class="mic-row" style="margin-top:8px;">
-        <div class="mic-wrap" id="micWrap">
-          <div class="mic-ring pulse-ring-1"></div>
-          <div class="mic-ring pulse-ring-2"></div>
-          <button class="mic-btn" id="micBtn" onclick="toggleRecording()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
-              <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-              <line x1="12" y1="19" x2="12" y2="23"/>
-              <line x1="8" y1="23" x2="16" y2="23"/>
-            </svg>
-          </button>
-        </div>
-      </div>
-      <div class="mic-hint" id="micHint">버튼을 누르고 말씀하세요</div>
-      <h2>어디 가실 건가요?</h2>
-      <p>마이크 버튼을 누르고<br>목적지를 말씀해 주세요</p>
-      <!-- Input area -->
-  <div class="input-area">
-    <div class="text-input-row">
-      <button class="mic-btn-small" id="micBtnSmall" onclick="toggleRecording()" title="음성 입력">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
-          <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-          <line x1="12" y1="19" x2="12" y2="23"/>
-          <line x1="8" y1="23" x2="16" y2="23"/>
-        </svg>
-      </button>
-      <input type="text" class="text-input" id="textInput" placeholder="목적지를 말하거나 입력하세요" />
-      <button class="send-btn" onclick="sendTextFromInput()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="22" y1="2" x2="11" y2="13"/>
-          <polygon points="22 2 15 22 11 13 2 9 22 2"/>
-        </svg>
-      </button>
     </div>
+    <div class="mic-hint" id="micHint">버튼을 누르고 말씀하세요</div>
+    <div class="location-status">
+      <div class="loc-dot" id="locDot"></div>
+      <span id="locStatus">위치 정보 가져오는 중...</span>
+      <button id="locRefreshBtn" onclick="refreshLocation()" style="background:none;border:none;cursor:pointer;padding:2px 4px;font-size:13px;color:var(--text-muted);line-height:1;" title="위치 새로고침">↻</button>
+    </div>
+    <div class="location-landmark" id="locationLandmark" style="display:none;font-size:11px;color:var(--text-muted);text-align:center;">📍 <span id="landmarkText"></span></div>
   </div>
-      
+
+  <!-- Chat / results area (scrollable) -->
+  <div class="chat-area" id="chatArea">
+    <div class="empty-state" id="emptyState">
+      <h2 class="action-title">어디 가실 건가요?</h2>
+      <p class="action-subtitle">마이크 버튼을 누르고<br>목적지를 말씀해 주세요</p>
       <div class="example-chips">
         <div class="chip" onclick="sendText('근처 맛집')"><span class="chip-icon">🍽️</span>맛집</div>
         <div class="chip" onclick="sendText('근처 카페')"><span class="chip-icon">☕</span>카페</div>
@@ -1019,34 +1001,21 @@
         <div class="chip" onclick="sendText('근처 병원')"><span class="chip-icon">🏥</span>병원</div>
         <div class="chip" onclick="sendText('근처 마트')"><span class="chip-icon">🛒</span>마트</div>
       </div>
-
-      <!-- Location status inside empty state -->
-      <div class="location-status" style="margin-top:20px;">
-        <div class="loc-dot" id="locDot"></div>
-        <span id="locStatus">위치 정보 가져오는 중...</span>
-        <button id="locRefreshBtn" onclick="refreshLocation()" style="background:none;border:none;cursor:pointer;padding:2px 4px;font-size:13px;color:var(--text-muted);line-height:1;" title="위치 새로고침">↻</button>
-      </div>
-      <div class="location-landmark" id="locationLandmark" style="display:none;font-size:11px;color:var(--text-muted);text-align:center;padding-bottom:2px;">📍 <span id="landmarkText"></span></div>
-
-
     </div>
   </div>
 
-  <!-- Quick chips (always visible) -->
-  <div class="quick-chips" id="quickChips">
-    <div class="chip" onclick="sendText('근처 맛집')"><span class="chip-icon">🍽️</span>맛집</div>
-    <div class="chip" onclick="sendText('근처 카페')"><span class="chip-icon">☕</span>카페</div>
-    <div class="chip" onclick="sendText('근처 편의점')"><span class="chip-icon">🏪</span>편의점</div>
-    <div class="chip" onclick="sendText('근처 약국')"><span class="chip-icon">💊</span>약국</div>
-    <div class="chip" onclick="sendText('근처 지하철역')"><span class="chip-icon">🚇</span>지하철역</div>
-    <div class="chip" onclick="sendText('근처 주차장')"><span class="chip-icon">🅿️</span>주차장</div>
-    <div class="chip" onclick="sendText('근처 은행')"><span class="chip-icon">🏦</span>은행</div>
-    <div class="chip" onclick="sendText('근처 주유소')"><span class="chip-icon">⛽</span>주유소</div>
-    <div class="chip" onclick="sendText('근처 병원')"><span class="chip-icon">🏥</span>병원</div>
-    <div class="chip" onclick="sendText('근처 마트')"><span class="chip-icon">🛒</span>마트</div>
+  <!-- Text input (bottom) -->
+  <div class="input-area">
+    <div class="text-input-row">
+      <input type="text" class="text-input" id="textInput" placeholder="목적지를 입력하세요" />
+      <button class="send-btn" onclick="sendTextFromInput()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="22" y1="2" x2="11" y2="13"/>
+          <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+        </svg>
+      </button>
+    </div>
   </div>
-
-  
 </div>
 
 <!-- Favorites Panel -->
@@ -1218,8 +1187,6 @@ function startRecording() {
     document.getElementById('micWrap').classList.add('recording-active');
     document.getElementById('micHint').textContent = '듣고 있어요... (다시 누르면 중지)';
     document.getElementById('micHint').classList.add('recording');
-    var sb = document.getElementById('micBtnSmall');
-    if (sb) { sb.classList.add('recording'); sb.innerHTML = stopIcon; }
   };
   recognition.onresult = function(e) { sendText(e.results[0][0].transcript); };
   recognition.onerror = function(e) {
@@ -1240,8 +1207,6 @@ function stopRecording() {
   document.getElementById('micWrap').classList.remove('recording-active');
   document.getElementById('micHint').textContent = '버튼을 누르고 말씀하세요';
   document.getElementById('micHint').classList.remove('recording');
-  var sb = document.getElementById('micBtnSmall');
-  if (sb) { sb.classList.remove('recording'); sb.innerHTML = micIcon; }
 }
 
 // ========================
