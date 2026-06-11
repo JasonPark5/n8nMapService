@@ -215,19 +215,26 @@
     }
     .example-chips {
       display: flex;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
+      overflow-x: auto;
       gap: 8px;
-      justify-content: center;
-      margin-top: 6px;
+      margin-top: 10px;
+      padding: 4px 2px 8px;
+      width: 100%;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
     }
+    .example-chips::-webkit-scrollbar { display: none; }
     .chip {
       background: var(--card-bg);
       border: 1.5px solid var(--border);
       border-radius: 100px;
-      padding: 7px 15px;
+      padding: 8px 14px;
       font-size: 13px;
       color: var(--text-secondary);
       cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
       transition: all 0.15s ease;
       box-shadow: var(--shadow-sm);
     }
@@ -934,11 +941,16 @@
       <h2>어디 가실 건가요?</h2>
       <p>마이크 버튼을 누르고<br>목적지를 말씀해 주세요</p>
       <div class="example-chips">
-        <div class="chip" onclick="sendText('대중교통으로 강남역 가기')">강남역 가는 길</div>
-        <div class="chip" onclick="sendText('스타벅스 찾아줘')">스타벅스 찾아줘</div>
-        <div class="chip" onclick="sendText('홍대입구역까지 가기')">홍대입구역</div>
-        <div class="chip" onclick="sendText('경복궁으로 가기')">경복궁</div>
-        <div class="chip" onclick="sendText('자동차로 인천공항 가기')">인천공항 (자동차)</div>
+        <div class="chip" onclick="sendText('근처 맛집')">🍽️ 근처 맛집</div>
+        <div class="chip" onclick="sendText('근처 카페')">☕ 근처 카페</div>
+        <div class="chip" onclick="sendText('근처 편의점')">🏪 근처 편의점</div>
+        <div class="chip" onclick="sendText('근처 약국')">💊 근처 약국</div>
+        <div class="chip" onclick="sendText('근처 지하철역')">🚇 근처 지하철역</div>
+        <div class="chip" onclick="sendText('근처 주차장')">🅿️ 근처 주차장</div>
+        <div class="chip" onclick="sendText('근처 은행')">🏦 근처 은행</div>
+        <div class="chip" onclick="sendText('근처 주유소')">⛽ 근처 주유소</div>
+        <div class="chip" onclick="sendText('근처 병원')">🏥 근처 병원</div>
+        <div class="chip" onclick="sendText('근처 마트')">🛒 근처 마트</div>
       </div>
     </div>
   </div>
