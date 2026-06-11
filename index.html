@@ -1143,9 +1143,8 @@ function fetchNearbyLandmark(lat, lng) {
     var a = data.address || {};
     // 표시용: 건물/시설명
     var display = a.amenity || a.shop || a.office || a.building || a.road || a.neighbourhood || a.suburb || '';
-    // 쿼리 보강용: 동/구 단위 (Naver 검색에 붙일 지역명)
-    var areaName = a.quarter || a.neighbourhood || a.suburb || a.city_district || a.district || a.county || '';
-    currentLocationName = areaName;
+    // 쿼리 보강용: 도로명 우선, 없으면 동/구 단위
+    currentLocationName = a.road || a.quarter || a.neighbourhood || a.suburb || a.city_district || a.district || '';
     if (display) {
       document.getElementById('landmarkText').textContent = display + ' 근처';
       document.getElementById('locationLandmark').style.display = 'block';
