@@ -684,7 +684,7 @@
       align-items: center;
       background: var(--bg);
       border-radius: 100px;
-      padding: 5px 5px 5px 16px;
+      padding: 5px;
       border: 1.5px solid var(--border);
       transition: border-color 0.15s;
     }
@@ -722,6 +722,17 @@
     }
     .send-btn:hover { background: var(--primary-dark); }
     .send-btn:active { transform: scale(0.95); }
+    .mic-btn-small {
+      width: 34px; height: 34px; flex-shrink: 0;
+      background: var(--primary);
+      color: #fff; border: none; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: background 0.15s, transform 0.15s;
+    }
+    .mic-btn-small:hover { background: var(--primary-dark); }
+    .mic-btn-small:active { transform: scale(0.95); }
+    .mic-btn-small.recording { background: #ef4444; }
+    .mic-btn-small svg { width: 16px; height: 16px; }
 
     /* ─── Config modal ────────────────────────── */
     .modal-overlay {
@@ -969,6 +980,31 @@
         <div class="chip" onclick="sendText('근처 병원')"><span class="chip-icon">🏥</span>병원</div>
         <div class="chip" onclick="sendText('근처 마트')"><span class="chip-icon">🛒</span>마트</div>
       </div>
+
+      <!-- Location status inside empty state -->
+      <div class="location-status" style="margin-top:20px;">
+        <div class="loc-dot" id="locDot"></div>
+        <span id="locStatus">위치 정보 가져오는 중...</span>
+        <button id="locRefreshBtn" onclick="refreshLocation()" style="background:none;border:none;cursor:pointer;padding:2px 4px;font-size:13px;color:var(--text-muted);line-height:1;" title="위치 새로고침">↻</button>
+      </div>
+      <div class="location-landmark" id="locationLandmark" style="display:none;font-size:11px;color:var(--text-muted);text-align:center;padding-bottom:2px;">📍 <span id="landmarkText"></span></div>
+
+      <!-- Mic button inside empty state -->
+      <div class="mic-row" style="margin-top:8px;">
+        <div class="mic-wrap" id="micWrap">
+          <div class="mic-ring pulse-ring-1"></div>
+          <div class="mic-ring pulse-ring-2"></div>
+          <button class="mic-btn" id="micBtn" onclick="toggleRecording()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+              <line x1="12" y1="19" x2="12" y2="23"/>
+              <line x1="8" y1="23" x2="16" y2="23"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div class="mic-hint" id="micHint">버튼을 누르고 말씀하세요</div>
     </div>
   </div>
 
@@ -988,28 +1024,15 @@
 
   <!-- Input area -->
   <div class="input-area">
-    <div class="location-status">
-      <div class="loc-dot" id="locDot"></div>
-      <span id="locStatus">위치 정보 가져오는 중...</span>
-      <button id="locRefreshBtn" onclick="refreshLocation()" style="background:none;border:none;cursor:pointer;padding:2px 4px;font-size:13px;color:var(--text-muted);line-height:1;" title="위치 새로고침">↻</button>
-    </div>
-    <div class="location-landmark" id="locationLandmark" style="display:none;font-size:11px;color:var(--text-muted);text-align:center;padding-bottom:2px;">📍 <span id="landmarkText"></span></div>
-    <div class="mic-row">
-      <div class="mic-wrap" id="micWrap">
-        <div class="mic-ring pulse-ring-1"></div>
-        <div class="mic-ring pulse-ring-2"></div>
-        <button class="mic-btn" id="micBtn" onclick="toggleRecording()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
-            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-            <line x1="12" y1="19" x2="12" y2="23"/>
-            <line x1="8" y1="23" x2="16" y2="23"/>
-          </svg>
-        </button>
-      </div>
-    </div>
-    <div class="mic-hint" id="micHint">버튼을 누르고 말씀하세요</div>
     <div class="text-input-row">
+      <button class="mic-btn-small" id="micBtnSmall" onclick="toggleRecording()" title="음성 입력">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+          <line x1="12" y1="19" x2="12" y2="23"/>
+          <line x1="8" y1="23" x2="16" y2="23"/>
+        </svg>
+      </button>
       <input type="text" class="text-input" id="textInput" placeholder="목적지를 말하거나 입력하세요" />
       <button class="send-btn" onclick="sendTextFromInput()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -1184,11 +1207,14 @@ function startRecording() {
 
   recognition.onstart = function() {
     isRecording = true;
+    const stopIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>';
     document.getElementById('micBtn').classList.add('recording');
-    document.getElementById('micBtn').innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>';
+    document.getElementById('micBtn').innerHTML = stopIcon;
     document.getElementById('micWrap').classList.add('recording-active');
     document.getElementById('micHint').textContent = '듣고 있어요... (다시 누르면 중지)';
     document.getElementById('micHint').classList.add('recording');
+    var sb = document.getElementById('micBtnSmall');
+    if (sb) { sb.classList.add('recording'); sb.innerHTML = stopIcon; }
   };
   recognition.onresult = function(e) { sendText(e.results[0][0].transcript); };
   recognition.onerror = function(e) {
@@ -1203,11 +1229,14 @@ function startRecording() {
 function stopRecording() {
   isRecording = false;
   if (recognition) { try { recognition.stop(); } catch(e) {} recognition = null; }
+  const micIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>';
   document.getElementById('micBtn').classList.remove('recording');
-  document.getElementById('micBtn').innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>';
+  document.getElementById('micBtn').innerHTML = micIcon;
   document.getElementById('micWrap').classList.remove('recording-active');
   document.getElementById('micHint').textContent = '버튼을 누르고 말씀하세요';
   document.getElementById('micHint').classList.remove('recording');
+  var sb = document.getElementById('micBtnSmall');
+  if (sb) { sb.classList.remove('recording'); sb.innerHTML = micIcon; }
 }
 
 // ========================
