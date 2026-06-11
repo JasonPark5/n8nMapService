@@ -547,6 +547,23 @@
     }
     .fav-delete-btn:hover { background: #fef2f2; color: #ef4444; border-color: #fecaca; }
 
+    /* ─── Persistent chips ───────────────────── */
+    .persistent-chips {
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 14px;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .persistent-chips .chip {
+      font-size: 11px;
+      padding: 7px 2px;
+      border-radius: 10px;
+    }
+    .persistent-chips .chip .chip-icon { font-size: 16px; }
+
     /* ─── Action header (mic + location, always visible) ── */
     .action-header {
       background: var(--card-bg);
@@ -984,23 +1001,24 @@
     <div class="location-landmark" id="locationLandmark" style="display:none;font-size:11px;color:var(--text-muted);text-align:center;">📍 <span id="landmarkText"></span></div>
   </div>
 
+  <!-- Persistent chips (always visible) -->
+  <div class="persistent-chips">
+    <div class="chip" onclick="sendText('근처 맛집')"><span class="chip-icon">🍽️</span>맛집</div>
+    <div class="chip" onclick="sendText('근처 카페')"><span class="chip-icon">☕</span>카페</div>
+    <div class="chip" onclick="sendText('근처 편의점')"><span class="chip-icon">🏪</span>편의점</div>
+    <div class="chip" onclick="sendText('근처 약국')"><span class="chip-icon">💊</span>약국</div>
+    <div class="chip" onclick="sendText('근처 지하철역')"><span class="chip-icon">🚇</span>지하철역</div>
+    <div class="chip" onclick="sendText('근처 주차장')"><span class="chip-icon">🅿️</span>주차장</div>
+    <div class="chip" onclick="sendText('근처 은행')"><span class="chip-icon">🏦</span>은행</div>
+    <div class="chip" onclick="sendText('근처 주유소')"><span class="chip-icon">⛽</span>주유소</div>
+    <div class="chip" onclick="sendText('근처 병원')"><span class="chip-icon">🏥</span>병원</div>
+    <div class="chip" onclick="sendText('근처 마트')"><span class="chip-icon">🛒</span>마트</div>
+  </div>
+
   <!-- Chat / results area (scrollable) -->
   <div class="chat-area" id="chatArea">
     <div class="empty-state" id="emptyState">
-      <h2 class="action-title">어디 가실 건가요?</h2>
-      <p class="action-subtitle">마이크 버튼을 누르고<br>목적지를 말씀해 주세요</p>
-      <div class="example-chips">
-        <div class="chip" onclick="sendText('근처 맛집')"><span class="chip-icon">🍽️</span>맛집</div>
-        <div class="chip" onclick="sendText('근처 카페')"><span class="chip-icon">☕</span>카페</div>
-        <div class="chip" onclick="sendText('근처 편의점')"><span class="chip-icon">🏪</span>편의점</div>
-        <div class="chip" onclick="sendText('근처 약국')"><span class="chip-icon">💊</span>약국</div>
-        <div class="chip" onclick="sendText('근처 지하철역')"><span class="chip-icon">🚇</span>지하철역</div>
-        <div class="chip" onclick="sendText('근처 주차장')"><span class="chip-icon">🅿️</span>주차장</div>
-        <div class="chip" onclick="sendText('근처 은행')"><span class="chip-icon">🏦</span>은행</div>
-        <div class="chip" onclick="sendText('근처 주유소')"><span class="chip-icon">⛽</span>주유소</div>
-        <div class="chip" onclick="sendText('근처 병원')"><span class="chip-icon">🏥</span>병원</div>
-        <div class="chip" onclick="sendText('근처 마트')"><span class="chip-icon">🛒</span>마트</div>
-      </div>
+      <p class="action-subtitle" style="margin-top:16px;">검색 결과가 여기에 표시됩니다</p>
     </div>
   </div>
 
