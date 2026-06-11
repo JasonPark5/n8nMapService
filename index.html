@@ -214,33 +214,34 @@
       line-height: 1.6;
     }
     .example-chips {
-      display: flex;
-      flex-wrap: nowrap;
-      overflow-x: auto;
-      gap: 8px;
-      margin-top: 10px;
-      padding: 4px 2px 8px;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 7px;
+      margin-top: 12px;
       width: 100%;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: none;
     }
-    .example-chips::-webkit-scrollbar { display: none; }
     .chip {
       background: var(--card-bg);
       border: 1.5px solid var(--border);
-      border-radius: 100px;
-      padding: 8px 14px;
-      font-size: 13px;
+      border-radius: 12px;
+      padding: 9px 4px;
+      font-size: 12px;
       color: var(--text-secondary);
       cursor: pointer;
-      white-space: nowrap;
-      flex-shrink: 0;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
       transition: all 0.15s ease;
       box-shadow: var(--shadow-sm);
+      line-height: 1.3;
     }
+    .chip .chip-icon { font-size: 18px; }
     .chip:hover {
       border-color: var(--primary);
       color: var(--primary);
+      background: var(--primary-light);
       box-shadow: 0 0 0 3px rgba(99,102,241,0.08);
     }
 
@@ -941,16 +942,16 @@
       <h2>어디 가실 건가요?</h2>
       <p>마이크 버튼을 누르고<br>목적지를 말씀해 주세요</p>
       <div class="example-chips">
-        <div class="chip" onclick="sendText('근처 맛집')">🍽️ 근처 맛집</div>
-        <div class="chip" onclick="sendText('근처 카페')">☕ 근처 카페</div>
-        <div class="chip" onclick="sendText('근처 편의점')">🏪 근처 편의점</div>
-        <div class="chip" onclick="sendText('근처 약국')">💊 근처 약국</div>
-        <div class="chip" onclick="sendText('근처 지하철역')">🚇 근처 지하철역</div>
-        <div class="chip" onclick="sendText('근처 주차장')">🅿️ 근처 주차장</div>
-        <div class="chip" onclick="sendText('근처 은행')">🏦 근처 은행</div>
-        <div class="chip" onclick="sendText('근처 주유소')">⛽ 근처 주유소</div>
-        <div class="chip" onclick="sendText('근처 병원')">🏥 근처 병원</div>
-        <div class="chip" onclick="sendText('근처 마트')">🛒 근처 마트</div>
+        <div class="chip" onclick="sendText('근처 맛집')"><span class="chip-icon">🍽️</span>맛집</div>
+        <div class="chip" onclick="sendText('근처 카페')"><span class="chip-icon">☕</span>카페</div>
+        <div class="chip" onclick="sendText('근처 편의점')"><span class="chip-icon">🏪</span>편의점</div>
+        <div class="chip" onclick="sendText('근처 약국')"><span class="chip-icon">💊</span>약국</div>
+        <div class="chip" onclick="sendText('근처 지하철역')"><span class="chip-icon">🚇</span>지하철역</div>
+        <div class="chip" onclick="sendText('근처 주차장')"><span class="chip-icon">🅿️</span>주차장</div>
+        <div class="chip" onclick="sendText('근처 은행')"><span class="chip-icon">🏦</span>은행</div>
+        <div class="chip" onclick="sendText('근처 주유소')"><span class="chip-icon">⛽</span>주유소</div>
+        <div class="chip" onclick="sendText('근처 병원')"><span class="chip-icon">🏥</span>병원</div>
+        <div class="chip" onclick="sendText('근처 마트')"><span class="chip-icon">🛒</span>마트</div>
       </div>
     </div>
   </div>
@@ -960,7 +961,9 @@
     <div class="location-status">
       <div class="loc-dot" id="locDot"></div>
       <span id="locStatus">위치 정보 가져오는 중...</span>
+      <button id="locRefreshBtn" onclick="refreshLocation()" style="background:none;border:none;cursor:pointer;padding:2px 4px;font-size:13px;color:var(--text-muted);line-height:1;" title="위치 새로고침">↻</button>
     </div>
+    <div class="location-landmark" id="locationLandmark" style="display:none;font-size:11px;color:var(--text-muted);text-align:center;padding-bottom:2px;">📍 <span id="landmarkText"></span></div>
     <div class="mic-row">
       <div class="mic-wrap" id="micWrap">
         <div class="mic-ring pulse-ring-1"></div>
@@ -1052,21 +1055,56 @@ let recognition = null;
 // ========================
 function initLocation() {
   if (!navigator.geolocation) {
-    setLocStatus('위치 서비스 미지원 (기본값 사용)', 'err');
+    setLocStatus('위치 서비스 미지원', 'err');
     currentLocation = { lat: 37.5665, lng: 126.9780 };
     return;
   }
+  setLocStatus('위치 확인 중...', '');
   navigator.geolocation.getCurrentPosition(
-    pos => {
-      currentLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-      setLocStatus('위치 확인됨 (' + currentLocation.lat.toFixed(4) + ', ' + currentLocation.lng.toFixed(4) + ')', 'ok');
+    function(pos) {
+      var lat = pos.coords.latitude;
+      var lng = pos.coords.longitude;
+      var acc = Math.round(pos.coords.accuracy);
+      currentLocation = { lat: lat, lng: lng };
+      setLocStatus('위치 확인됨 (오차 ' + acc + 'm)', 'ok');
+      fetchNearbyLandmark(lat, lng);
     },
-    () => {
-      setLocStatus('위치 권한 없음 (서울시청 기준)', 'err');
+    function(err) {
+      var msgs = {
+        1: '위치 권한 거부됨',
+        2: '위치를 찾을 수 없음',
+        3: '위치 요청 시간 초과'
+      };
+      setLocStatus((msgs[err.code] || '위치 오류') + ' — 서울시청 기준', 'err');
       currentLocation = { lat: 37.5665, lng: 126.9780 };
     },
-    { enableHighAccuracy: true, timeout: 10000 }
+    { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
   );
+}
+
+function refreshLocation() {
+  document.getElementById('locationLandmark').style.display = 'none';
+  currentLocation = null;
+  initLocation();
+}
+
+function fetchNearbyLandmark(lat, lng) {
+  fetch('https://nominatim.openstreetmap.org/reverse?lat=' + lat + '&lon=' + lng + '&format=json&accept-language=ko&zoom=17', {
+    headers: { 'Accept-Language': 'ko' }
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    var a = data.address || {};
+    var landmark =
+      a.amenity || a.shop || a.office || a.building ||
+      a.road || a.neighbourhood || a.suburb ||
+      a.quarter || a.district || '';
+    if (landmark) {
+      document.getElementById('landmarkText').textContent = landmark + ' 근처';
+      document.getElementById('locationLandmark').style.display = 'block';
+    }
+  })
+  .catch(function() {});
 }
 
 function setLocStatus(msg, type) {
