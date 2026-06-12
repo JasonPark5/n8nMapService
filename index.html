@@ -570,6 +570,17 @@
     }
     .fav-delete-btn:hover { background: #fef2f2; color: #ef4444; border-color: #fecaca; }
 
+    /* ─── Mini map preview ───────────────────── */
+    .mini-map-wrap { border-radius: 10px; overflow: hidden; margin-bottom: 8px; }
+    .mini-map { width: 100%; height: 160px; border: none; border-radius: 10px; }
+
+    /* ─── Alias link ─────────────────────────── */
+    .fav-alias-link {
+      font-size: 11px; color: var(--primary); cursor: pointer;
+      background: none; border: none; padding: 0; margin-left: 6px;
+      text-decoration: underline;
+    }
+
     /* ─── Persistent chips ───────────────────── */
     .persistent-chips {
       background: var(--card-bg);
@@ -969,6 +980,18 @@
     <span style="font-weight:800;letter-spacing:0.5px;color:#1a3353;">ZENTIA</span>
     <span style="font-weight:400;color:#6b7280;font-size:14px;"> 음성 길찾기</span>
   </div>
+  <button class="icon-btn" id="ttsToggleBtn" onclick="toggleTTS()" title="TTS 켜기/끄기">
+    <svg id="ttsIconOn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+      <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+      <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+    </svg>
+    <svg id="ttsIconOff" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
+      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+      <line x1="23" y1="9" x2="17" y2="15"/>
+      <line x1="17" y1="9" x2="23" y2="15"/>
+    </svg>
+  </button>
   <button class="icon-btn" onclick="openConfig()" title="설정">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <circle cx="12" cy="12" r="3"/>
@@ -1119,6 +1142,86 @@ let locationReady = null;       // Promise: GPS + Nominatim 모두 완료
 let transportMode = 'transit';
 let isRecording = false;
 let recognition = null;
+let lastCandidates = [];
+let ttsEnabled = localStorage.getItem('ttsEnabled') !== 'false';
+
+// ========================
+// TTS
+// ========================
+function speak(text) {
+  if (!ttsEnabled) return;
+  if (!window.speechSynthesis) return;
+  speechSynthesis.cancel();
+  var utter = new SpeechSynthesisUtterance(text);
+  utter.lang = 'ko-KR';
+  utter.rate = 1.05;
+  speechSynthesis.speak(utter);
+}
+
+function toggleTTS() {
+  ttsEnabled = !ttsEnabled;
+  localStorage.setItem('ttsEnabled', ttsEnabled ? 'true' : 'false');
+  document.getElementById('ttsIconOn').style.display = ttsEnabled ? '' : 'none';
+  document.getElementById('ttsIconOff').style.display = ttsEnabled ? 'none' : '';
+  showToast('TTS ' + (ttsEnabled ? '켜짐' : '꺼짐'));
+}
+
+function initTTSIcon() {
+  document.getElementById('ttsIconOn').style.display = ttsEnabled ? '' : 'none';
+  document.getElementById('ttsIconOff').style.display = ttsEnabled ? 'none' : '';
+}
+
+// ========================
+// VOICE COMMAND (결과 후 번호/이름 선택)
+// ========================
+function checkVoiceCommand(text) {
+  if (!lastCandidates.length) return false;
+  var numMap = {'첫':0,'1번':0,'일번':0,'하나':0,'두':1,'2번':1,'이번':1,'둘':1,'세':2,'3번':2,'삼번':2,'셋':2,'넷':3,'4번':3,'사번':3,'다섯':4,'5번':4,'오번':4};
+  for (var k in numMap) {
+    if (text.includes(k) && numMap[k] < lastCandidates.length) {
+      var c = lastCandidates[numMap[k]];
+      navigateTo(c.lat, c.lng, c.name);
+      return true;
+    }
+  }
+  for (var i = 0; i < lastCandidates.length; i++) {
+    if (lastCandidates[i].name && text.includes(lastCandidates[i].name)) {
+      navigateTo(lastCandidates[i].lat, lastCandidates[i].lng, lastCandidates[i].name);
+      return true;
+    }
+  }
+  return false;
+}
+
+// ========================
+// FAVORITE VOICE SHORTCUT
+// ========================
+function checkFavoriteVoice(text) {
+  var favs = getFavorites();
+  if (!favs.length) return false;
+  var clean = text.replace(/(으로|로|에|까지|가줘|가자|갈래|안내|길찾기)/g,'').trim();
+  var match = favs.find(function(f) { return (f.alias && clean.includes(f.alias)) || (f.name && clean.includes(f.name)); });
+  if (match) {
+    addUserMessage(text);
+    speak(match.name + '으로 길찾기를 시작합니다');
+    navigateTo(match.lat, match.lng, match.name);
+    return true;
+  }
+  return false;
+}
+
+function setFavoriteAlias(lat, lng) {
+  var favs = getFavorites();
+  var idx = favs.findIndex(function(f) { return Math.abs(f.lat - lat) < 0.0001 && Math.abs(f.lng - lng) < 0.0001; });
+  if (idx < 0) return;
+  var current = favs[idx].alias || '';
+  var alias = prompt('음성 호출 별칭을 입력하세요 (예: 집, 회사):', current);
+  if (alias === null) return;
+  favs[idx].alias = alias.trim();
+  saveFavorites(favs);
+  renderFavorites();
+  showToast(alias ? '"' + alias + '" 별칭이 저장됐습니다.' : '별칭이 삭제됐습니다.');
+}
 
 // ========================
 // GEOLOCATION
@@ -1266,7 +1369,10 @@ function startRecording() {
     document.getElementById('micHint').textContent = '듣고 있어요... (다시 누르면 중지)';
     document.getElementById('micHint').classList.add('recording');
   };
-  recognition.onresult = function(e) { sendText(e.results[0][0].transcript); };
+  recognition.onresult = function(e) {
+    var transcript = e.results[0][0].transcript;
+    if (!checkVoiceCommand(transcript)) sendText(transcript);
+  };
   recognition.onerror = function(e) {
     stopRecording();
     var msgs = { 'not-allowed': '마이크 권한을 허용해주세요.', 'no-speech': '음성이 감지되지 않았습니다.' };
@@ -1338,6 +1444,7 @@ function sendCategory(code, label) {
 }
 
 function sendText(text, categoryGroupCode) {
+  if (!categoryGroupCode && checkFavoriteVoice(text)) return;
   clearResults();
   hideEmptyState();
   addUserMessage(text);
@@ -1383,9 +1490,11 @@ function doSearch(text, loadingId, categoryGroupCode) {
     if (mode !== transportMode) setTransport(mode);
     if (candidates.length === 0) {
       addBotMessage('검색 결과가 없습니다. 다른 목적지를 말씀해주세요.');
+      speak('검색 결과가 없습니다.');
     } else {
       if (dest) addBotMessage('"' + dest + '" 검색 결과예요. (' + (mode === 'transit' ? '대중교통' : '자동차') + ')');
       showCandidates(candidates);
+      speak(candidates.length + '곳을 찾았어요. 가장 가까운 곳은 ' + (candidates[0].distanceLabel || '') + ' 거리의 ' + candidates[0].name + '입니다.');
     }
   })
   .catch(function(err) {
@@ -1436,6 +1545,8 @@ function removeMessage(id) {
 }
 
 function showCandidates(candidates) {
+  lastCandidates = candidates;
+
   var wrapper = document.createElement('div');
   wrapper.className = 'message bot';
   wrapper.style.cssText = 'max-width:100%;width:100%;';
@@ -1443,6 +1554,15 @@ function showCandidates(candidates) {
   var inner = document.createElement('div');
   inner.className = 'candidates-wrapper';
   inner.innerHTML = '<div class="candidates-title">' + candidates.length + '곳을 찾았어요</div>';
+
+  // Mini map preview (first candidate)
+  if (candidates.length > 0) {
+    var mapDiv = document.createElement('div');
+    mapDiv.className = 'mini-map-wrap';
+    var c0 = candidates[0];
+    mapDiv.innerHTML = '<iframe class="mini-map" src="https://map.kakao.com/link/map/' + encodeURIComponent(c0.name) + ',' + c0.lat + ',' + c0.lng + '" frameborder="0" allowfullscreen></iframe>';
+    inner.appendChild(mapDiv);
+  }
 
   candidates.forEach(function(place) {
     var isFav = isFavorite(place.lat, place.lng);
@@ -1513,6 +1633,7 @@ function navigateTo(dlat, dlng, dname, mode) {
   }
 
   addBotMessage('"' + dname + '" 길찾기를 시작합니다! (' + (mode === 'transit' ? '대중교통 🚇' : '자동차 🚗') + ')');
+  speak(dname + ' 길찾기를 시작합니다');
 }
 
 // ========================
@@ -1585,8 +1706,8 @@ function renderFavorites() {
           '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>' +
         '</div>' +
         '<div class="fav-info">' +
-          '<div class="fav-name">' + escHtml(f.name) + '</div>' +
-          '<div class="fav-address">' + escHtml(f.address || '') + '</div>' +
+          '<div class="fav-name">' + escHtml(f.name) + (f.alias ? ' <span style="font-size:11px;color:var(--primary);font-weight:500;">(' + escHtml(f.alias) + ')</span>' : '') + '</div>' +
+          '<div class="fav-address">' + escHtml(f.address || '') + ' <button class="fav-alias-link" onclick="setFavoriteAlias(' + f.lat + ',' + f.lng + ')" title="별칭 설정">별칭</button></div>' +
         '</div>' +
       '</div>' +
       '<div class="fav-row2">' +
@@ -1713,6 +1834,7 @@ detectInAppBrowser();
 initLocation();
 updateFavCount();
 renderRecentSearches();
+initTTSIcon();
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').then(function(reg) {
