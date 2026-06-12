@@ -451,6 +451,22 @@
     }
     .recent-chip:hover { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
 
+    /* ─── Usage tip ────────────────────────── */
+    .usage-tip {
+      width: 100%;
+      background: var(--primary-light);
+      border: 1px solid #e0e3ff;
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 13px;
+      color: var(--text);
+      line-height: 1.6;
+      text-align: left;
+      margin-bottom: 6px;
+    }
+    .usage-tip strong { color: var(--primary); font-weight: 600; }
+    .usage-tip em { font-style: normal; background: #fff; padding: 1px 6px; border-radius: 6px; color: var(--primary); font-weight: 500; }
+
     /* ─── Favorites panel ─────────────────────── */
     .fav-panel {
       flex: 1;
@@ -1064,6 +1080,10 @@
   <!-- Chat / results area (scrollable) -->
   <div class="chat-area" id="chatArea">
     <div class="empty-state" id="emptyState">
+      <div class="usage-tip">
+        💡 <strong>먼 곳을 찾으려면 동/구 이름과 함께</strong><br>
+        예) "<em>강남 잠실나루역</em>", "<em>홍대 스타벅스</em>", "<em>판교 카카오</em>"
+      </div>
       <div id="recentSearches" class="recent-box" style="display:none;"></div>
       <p class="action-subtitle" style="margin-top:8px;">검색 결과가 여기에 표시됩니다</p>
     </div>
