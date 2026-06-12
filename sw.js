@@ -1,4 +1,4 @@
-const CACHE = 'zentia-v1';
+const CACHE = 'zentia-v3';
 const ASSETS = [
   '/n8nMapService/',
   '/n8nMapService/index.html',
@@ -22,10 +22,26 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  // n8n webhook은 캐시하지 않음 (항상 네트워크)
-  if (e.request.url.includes('n8n.cloud') || e.request.url.includes('nominatim')) {
+  const url = e.request.url;
+
+  // n8n / Nominatim: 항상 네트워크 (캐시하지 않음)
+  if (url.includes('n8n.cloud') || url.includes('nominatim')) return;
+
+  // index.html / 루트: network-first (최신 코드 우선)
+  if (e.request.mode === 'navigate' || url.endsWith('/') || url.endsWith('/index.html')) {
+    e.respondWith(
+      fetch(e.request)
+        .then(r => {
+          const copy = r.clone();
+          caches.open(CACHE).then(c => c.put(e.request, copy));
+          return r;
+        })
+        .catch(() => caches.match(e.request))
+    );
     return;
   }
+
+  // 그 외(아이콘 등): cache-first
   e.respondWith(
     caches.match(e.request).then(cached => cached || fetch(e.request))
   );
