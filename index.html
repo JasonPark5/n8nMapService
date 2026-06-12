@@ -326,17 +326,31 @@
     }
     .candidate-card {
       background: var(--card-bg);
-      border: 1px solid var(--border);
+      border: 1.5px solid var(--border);
       border-radius: var(--radius-md);
       padding: 14px;
       margin-bottom: 8px;
-      transition: box-shadow 0.15s ease, transform 0.15s ease, border-color 0.15s ease;
+      transition: box-shadow 0.15s ease, transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
       position: relative;
+      cursor: pointer;
     }
     .candidate-card:hover {
       border-color: #e0e1ff;
       transform: translateY(-1px);
       box-shadow: var(--shadow-md);
+    }
+    .candidate-card:active {
+      transform: scale(0.985);
+      background: #f5f5ff;
+    }
+    .candidate-card.selected {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(99,102,241,0.12), var(--shadow-md);
+      background: #fafaff;
+    }
+    .candidate-card.selected .card-num {
+      background: var(--primary);
+      color: #fff;
     }
     .card-row1 {
       display: flex;
@@ -2048,14 +2062,38 @@ function showCandidates(candidates) {
   inner.className = 'candidates-wrapper';
   inner.innerHTML = '<div class="candidates-title">' + t('search.foundCount', candidates.length) + '</div>';
 
-  // Mini map preview (first candidate)
+  // Mini map preview
+  var mapDiv = null;
   if (candidates.length > 0) {
-    var mapDiv = document.createElement('div');
+    mapDiv = document.createElement('div');
     mapDiv.className = 'mini-map-wrap';
-    var c0 = candidates[0];
-    var bbox = (c0.lng - 0.004) + ',' + (c0.lat - 0.003) + ',' + (c0.lng + 0.004) + ',' + (c0.lat + 0.003);
-    mapDiv.innerHTML = '<iframe class="mini-map" src="https://www.openstreetmap.org/export/embed.html?bbox=' + bbox + '&layer=mapnik&marker=' + c0.lat + ',' + c0.lng + '" frameborder="0" loading="lazy"></iframe>';
+    mapDiv.id = 'miniMapWrap_' + Date.now();
     inner.appendChild(mapDiv);
+    updateMiniMap(mapDiv, candidates[0]);
+  }
+
+  function updateMiniMap(div, place) {
+    var bbox = (place.lng - 0.004) + ',' + (place.lat - 0.003) + ',' + (place.lng + 0.004) + ',' + (place.lat + 0.003);
+    var src = 'https://www.openstreetmap.org/export/embed.html?bbox=' + bbox + '&layer=mapnik&marker=' + place.lat + ',' + place.lng;
+    var existing = div.querySelector('iframe');
+    if (existing) {
+      // Fade out → update src → fade in
+      existing.style.transition = 'opacity 0.2s';
+      existing.style.opacity = '0';
+      setTimeout(function() {
+        existing.src = src;
+        existing.style.opacity = '1';
+      }, 200);
+    } else {
+      div.innerHTML = '<iframe class="mini-map" src="' + src + '" frameborder="0" loading="lazy"></iframe>';
+    }
+  }
+
+  function selectCard(card, place) {
+    // Deselect all sibling cards
+    inner.querySelectorAll('.candidate-card').forEach(function(c) { c.classList.remove('selected'); });
+    card.classList.add('selected');
+    if (mapDiv) updateMiniMap(mapDiv, place);
   }
 
   candidates.forEach(function(place) {
@@ -2064,7 +2102,7 @@ function showCandidates(candidates) {
     place.category = decodeEntities(place.category || '');
     var isFav = isFavorite(place.lat, place.lng);
     var card = document.createElement('div');
-    card.className = 'candidate-card';
+    card.className = 'candidate-card' + (candidates.indexOf(place) === 0 ? ' selected' : '');
     card.dataset.lat = place.lat;
     card.dataset.lng = place.lng;
     card.dataset.name = place.name || '';
@@ -2091,6 +2129,12 @@ function showCandidates(candidates) {
           '<button class="card-select-btn" onclick="navigateTo(' + place.lat + ',' + place.lng + ',\'' + escAttr(place.name || '') + '\')">' + t('nav.go') + '</button>' +
         '</div>' +
       '</div>';
+    // Card tap → select + update map (ignore taps on buttons/links)
+    card.addEventListener('click', function(e) {
+      if (e.target.closest('button, a')) return;
+      selectCard(card, place);
+    });
+
     inner.appendChild(card);
   });
 
