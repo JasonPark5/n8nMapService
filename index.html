@@ -1477,10 +1477,21 @@ function doSearch(text, loadingId, categoryGroupCode) {
   })
   .then(function(r) {
     if (!r.ok) throw new Error('서버 오류 ' + r.status);
-    return r.json();
+    return r.text();
   })
-  .then(function(data) {
+  .then(function(raw) {
     removeMessage(loadingId);
+    if (!raw || !raw.trim()) {
+      addBotMessage('검색 결과가 없습니다. 다른 목적지를 말씀해주세요.');
+      if (ttsEnabled) speak('검색 결과가 없습니다');
+      return;
+    }
+    var data;
+    try { data = JSON.parse(raw); }
+    catch (e) {
+      addBotMessage('응답 형식 오류: ' + raw.slice(0, 100));
+      return;
+    }
     // n8n이 배열로 감싸서 보내는 경우 처리
     var root = Array.isArray(data) ? data[0] : data;
     var candidates = root.candidates || (Array.isArray(root) ? root : []);
