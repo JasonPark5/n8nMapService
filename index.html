@@ -468,6 +468,92 @@
       margin-bottom: 6px;
     }
     .usage-tip strong { color: var(--primary); font-weight: 600; }
+
+    /* ─── Settings new controls ──────────────── */
+    .seg-group {
+      display: flex;
+      gap: 6px;
+      background: var(--bg);
+      padding: 4px;
+      border-radius: 10px;
+      margin-top: 6px;
+    }
+    .seg-btn {
+      flex: 1;
+      background: transparent;
+      border: none;
+      padding: 8px 10px;
+      border-radius: 7px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      transition: all 0.15s;
+    }
+    .seg-btn.active {
+      background: var(--card-bg);
+      color: var(--primary);
+      box-shadow: var(--shadow-sm);
+      font-weight: 600;
+    }
+    .voice-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-top: 6px;
+    }
+    .voice-select {
+      flex: 1;
+      padding: 9px 10px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--card-bg);
+      font-size: 13px;
+      color: var(--text);
+      font-family: inherit;
+    }
+    .btn-mini {
+      padding: 9px 14px;
+      background: var(--primary-light);
+      color: var(--primary);
+      border: 1px solid #e0e3ff;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .btn-mini:hover { background: #dde0ff; }
+    .radius-value {
+      float: right;
+      color: var(--primary);
+      font-weight: 700;
+      font-size: 13px;
+    }
+    #radiusSlider {
+      width: 100%;
+      margin-top: 8px;
+      accent-color: var(--primary);
+    }
+    .advanced-details {
+      margin-top: 16px;
+      padding-top: 12px;
+      border-top: 1px dashed var(--border);
+    }
+    .advanced-details > summary {
+      cursor: pointer;
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 500;
+      list-style: none;
+      padding: 4px 0;
+    }
+    .advanced-details > summary::before {
+      content: "▸ ";
+      display: inline-block;
+      transition: transform 0.15s;
+    }
+    .advanced-details[open] > summary::before { content: "▾ "; }
     .usage-tip em { font-style: normal; background: #fff; padding: 1px 6px; border-radius: 6px; color: var(--primary); font-weight: 500; }
 
     /* ─── Favorites panel ─────────────────────── */
@@ -1029,9 +1115,9 @@
   </div>
   <div class="header-title">
     <span style="font-weight:800;letter-spacing:0.5px;color:#1a3353;">ZENTIA</span>
-    <span style="font-weight:400;color:#6b7280;font-size:14px;"> 음성 길찾기</span>
+    <span style="font-weight:400;color:#6b7280;font-size:14px;" data-i18n="header.subtitle"> 음성 길찾기</span>
   </div>
-  <button class="icon-btn" id="ttsToggleBtn" onclick="toggleTTS()" title="TTS 켜기/끄기">
+  <button class="icon-btn" id="ttsToggleBtn" onclick="toggleTTS()" data-i18n-title="tts.title" title="TTS 켜기/끄기">
     <svg id="ttsIconOn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
       <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
@@ -1043,7 +1129,7 @@
       <line x1="17" y1="9" x2="23" y2="15"/>
     </svg>
   </button>
-  <button class="icon-btn" onclick="openConfig()" title="설정">
+  <button class="icon-btn" onclick="openConfig()" data-i18n-title="settings.title" title="설정">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <circle cx="12" cy="12" r="3"/>
       <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
@@ -1056,11 +1142,11 @@
   <div class="tab-group">
     <button class="tab-btn active" id="tab-chat" onclick="switchTab('chat')">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-      채팅
+      <span data-i18n="tab.chat">채팅</span>
     </button>
     <button class="tab-btn" id="tab-fav" onclick="switchTab('fav')">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-      즐겨찾기 <span id="fav-count"></span>
+      <span data-i18n="tab.fav">즐겨찾기</span> <span id="fav-count"></span>
     </button>
   </div>
 </div>
@@ -1069,8 +1155,8 @@
 <div class="panel active" id="panel-chat" style="overflow:hidden;">
   <!-- Transport toggle -->
   <div class="transport-bar">
-    <button class="transport-btn active" id="btn-transit" onclick="setTransport('transit')">🚇 대중교통</button>
-    <button class="transport-btn" id="btn-car" onclick="setTransport('car')">🚗 자동차</button>
+    <button class="transport-btn active" id="btn-transit" onclick="setTransport('transit')" data-i18n="transport.transit">🚇 대중교통</button>
+    <button class="transport-btn" id="btn-car" onclick="setTransport('car')" data-i18n="transport.car">🚗 자동차</button>
   </div>
 
   <!-- Mic + Location (always visible) -->
@@ -1089,45 +1175,42 @@
         </button>
       </div>
     </div>
-    <div class="mic-hint" id="micHint">버튼을 누르고 말씀하세요</div>
+    <div class="mic-hint" id="micHint" data-i18n="mic.hint">버튼을 누르고 말씀하세요</div>
     <div class="location-status">
       <div class="loc-dot" id="locDot"></div>
-      <span id="locStatus">위치 정보 가져오는 중...</span>
-      <button id="locRefreshBtn" onclick="refreshLocation()" style="background:none;border:none;cursor:pointer;padding:2px 4px;font-size:13px;color:var(--text-muted);line-height:1;" title="위치 새로고침">↻</button>
+      <span id="locStatus" data-i18n="loc.loading">위치 정보 가져오는 중...</span>
+      <button id="locRefreshBtn" onclick="refreshLocation()" style="background:none;border:none;cursor:pointer;padding:2px 4px;font-size:13px;color:var(--text-muted);line-height:1;" data-i18n-title="loc.refresh" title="위치 새로고침">↻</button>
     </div>
     <div class="location-landmark" id="locationLandmark" style="display:none;font-size:11px;color:var(--text-muted);text-align:center;">📍 <span id="landmarkText"></span></div>
   </div>
 
   <!-- Persistent chips (always visible) -->
   <div class="persistent-chips">
-    <div class="chip" onclick="sendCategory('FD6','맛집')"><span class="chip-icon">🍽️</span>맛집</div>
-    <div class="chip" onclick="sendCategory('CE7','카페')"><span class="chip-icon">☕</span>카페</div>
-    <div class="chip" onclick="sendCategory('CS2','편의점')"><span class="chip-icon">🏪</span>편의점</div>
-    <div class="chip" onclick="sendCategory('PM9','약국')"><span class="chip-icon">💊</span>약국</div>
-    <div class="chip" onclick="sendCategory('SW8','지하철역')"><span class="chip-icon">🚇</span>지하철역</div>
-    <div class="chip" onclick="sendCategory('PK6','주차장')"><span class="chip-icon">🅿️</span>주차장</div>
-    <div class="chip" onclick="sendCategory('BK9','은행')"><span class="chip-icon">🏦</span>은행</div>
-    <div class="chip" onclick="sendCategory('OL7','주유소')"><span class="chip-icon">⛽</span>주유소</div>
-    <div class="chip" onclick="sendCategory('HP8','병원')"><span class="chip-icon">🏥</span>병원</div>
-    <div class="chip" onclick="sendCategory('MT1','마트')"><span class="chip-icon">🛒</span>마트</div>
+    <div class="chip" onclick="sendChip('FD6')"><span class="chip-icon">🍽️</span><span data-i18n="chip.FD6">맛집</span></div>
+    <div class="chip" onclick="sendChip('CE7')"><span class="chip-icon">☕</span><span data-i18n="chip.CE7">카페</span></div>
+    <div class="chip" onclick="sendChip('CS2')"><span class="chip-icon">🏪</span><span data-i18n="chip.CS2">편의점</span></div>
+    <div class="chip" onclick="sendChip('PM9')"><span class="chip-icon">💊</span><span data-i18n="chip.PM9">약국</span></div>
+    <div class="chip" onclick="sendChip('SW8')"><span class="chip-icon">🚇</span><span data-i18n="chip.SW8">지하철역</span></div>
+    <div class="chip" onclick="sendChip('PK6')"><span class="chip-icon">🅿️</span><span data-i18n="chip.PK6">주차장</span></div>
+    <div class="chip" onclick="sendChip('BK9')"><span class="chip-icon">🏦</span><span data-i18n="chip.BK9">은행</span></div>
+    <div class="chip" onclick="sendChip('OL7')"><span class="chip-icon">⛽</span><span data-i18n="chip.OL7">주유소</span></div>
+    <div class="chip" onclick="sendChip('HP8')"><span class="chip-icon">🏥</span><span data-i18n="chip.HP8">병원</span></div>
+    <div class="chip" onclick="sendChip('MT1')"><span class="chip-icon">🛒</span><span data-i18n="chip.MT1">마트</span></div>
   </div>
 
   <!-- Chat / results area (scrollable) -->
   <div class="chat-area" id="chatArea">
     <div class="empty-state" id="emptyState">
-      <div class="usage-tip">
-        💡 위 <strong>칩</strong>은 <strong>현재 위치 5km 이내</strong> 추천이에요<br>
-        멀리 있는 곳은 <em>마이크</em>나 <em>아래 입력창</em>으로 검색해주세요
-      </div>
+      <div class="usage-tip" id="usageTip"></div>
       <div id="recentSearches" class="recent-box" style="display:none;"></div>
-      <p class="action-subtitle" style="margin-top:8px;">검색 결과가 여기에 표시됩니다</p>
+      <p class="action-subtitle" id="emptySubtitle" style="margin-top:8px;" data-i18n="empty.subtitle">검색 결과가 여기에 표시됩니다</p>
     </div>
   </div>
 
   <!-- Text input (bottom) -->
   <div class="input-area">
     <div class="text-input-row">
-      <input type="text" class="text-input" id="textInput" placeholder="목적지를 입력하세요" />
+      <input type="text" class="text-input" id="textInput" data-i18n-ph="input.placeholder" placeholder="목적지를 입력하세요" />
       <button class="send-btn" onclick="sendTextFromInput()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <line x1="22" y1="2" x2="11" y2="13"/>
@@ -1154,13 +1237,13 @@
     </div>
     <div class="inapp-text">
       <strong id="inappTitle">Chrome에서 열어주세요</strong>
-      <span id="inappDesc">음성 인식은 Chrome 브라우저에서만 지원됩니다.</span>
+      <span id="inappDesc" data-i18n="inapp.descChrome">음성 인식은 Chrome 브라우저에서만 지원됩니다.</span>
     </div>
     <button class="inapp-close" onclick="document.getElementById('inappBanner').style.display='none'">✕</button>
   </div>
   <div class="inapp-actions">
-    <button class="inapp-btn-primary" id="inappOpenBtn" onclick="openInChrome()">Chrome으로 열기</button>
-    <button class="inapp-btn-secondary" onclick="copyPageUrl()">🔗 링크 복사</button>
+    <button class="inapp-btn-primary" id="inappOpenBtn" onclick="openInChrome()" data-i18n="inapp.openChrome">Chrome으로 열기</button>
+    <button class="inapp-btn-secondary" onclick="copyPageUrl()" data-i18n="inapp.copy">🔗 링크 복사</button>
   </div>
 </div>
 
@@ -1172,17 +1255,45 @@
         <circle cx="12" cy="12" r="3"/>
         <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
       </svg>
-      <h2>설정</h2>
+      <h2 data-i18n="settings.title">설정</h2>
     </div>
-    <label>n8n Webhook URL</label>
-    <input type="url" id="webhookInput" placeholder="https://your-n8n.com/webhook/map-search" />
-    <div class="modal-note">n8n 워크플로우 활성화 후 Webhook URL을 복사해 붙여넣으세요.</div>
-    <div class="modal-note" style="margin-top:10px;">
-      내 ID: <code id="userIdDisplay" style="font-size:11px;color:var(--text-secondary);user-select:all;"></code>
+
+    <!-- Language -->
+    <label data-i18n="settings.lang">언어</label>
+    <div class="seg-group" id="langSeg">
+      <button type="button" class="seg-btn" data-val="ko" onclick="setLangPick('ko')">한국어</button>
+      <button type="button" class="seg-btn" data-val="en" onclick="setLangPick('en')">English</button>
     </div>
+
+    <!-- Voice -->
+    <label data-i18n="settings.voice" style="margin-top:14px;">음성</label>
+    <div class="voice-row">
+      <select id="voiceSelect" class="voice-select"></select>
+      <button type="button" class="btn-mini" onclick="previewVoice()" data-i18n="settings.voice.preview">미리듣기</button>
+    </div>
+
+    <!-- Chip radius -->
+    <label style="margin-top:14px;">
+      <span data-i18n="settings.chipRadius">칩 검색 반경</span>
+      <span id="radiusValue" class="radius-value">5 km</span>
+    </label>
+    <input type="range" id="radiusSlider" min="1" max="10" step="1" value="5" oninput="onRadiusInput(this.value)" />
+    <div class="modal-note" data-i18n="settings.chipRadius.hint">"칩"으로 검색할 때 현재 위치 기준 반경</div>
+
+    <!-- Advanced (collapsed) -->
+    <details class="advanced-details" id="advancedDetails">
+      <summary data-i18n="settings.advanced">고급 설정</summary>
+      <label style="margin-top:10px;" data-i18n="settings.webhookLabel">n8n Webhook URL</label>
+      <input type="url" id="webhookInput" placeholder="https://your-n8n.com/webhook/map-search" />
+      <div class="modal-note" data-i18n="settings.webhookNote">n8n 워크플로우 활성화 후 Webhook URL을 복사해 붙여넣으세요.</div>
+      <div class="modal-note" style="margin-top:10px;">
+        <span data-i18n="settings.uidLabel">내 ID</span>: <code id="userIdDisplay" style="font-size:11px;color:var(--text-secondary);user-select:all;"></code>
+      </div>
+    </details>
+
     <div class="modal-actions">
-      <button class="btn-secondary" onclick="closeConfig()">취소</button>
-      <button class="btn-primary" onclick="saveConfig()">저장</button>
+      <button class="btn-secondary" onclick="closeConfig()" data-i18n="settings.cancel">취소</button>
+      <button class="btn-primary" onclick="saveConfig()" data-i18n="settings.save">저장</button>
     </div>
   </div>
 </div>
@@ -1194,6 +1305,243 @@
 const CONFIG = {
   webhookUrl: localStorage.getItem('webhookUrl') || 'https://blueblood5.app.n8n.cloud/webhook/map-search',
 };
+
+// ========================
+// SETTINGS (multi-language / voice / chip radius)
+// ========================
+let currentLang = localStorage.getItem('lang') || (navigator.language || 'ko').slice(0,2);
+if (currentLang !== 'en' && currentLang !== 'ko') currentLang = 'ko';
+let chipRadius = parseInt(localStorage.getItem('chipRadius')) || 5000; // meters
+let selectedVoiceURI = localStorage.getItem('voiceURI') || '';
+let availableVoices = [];
+
+const I18N = {
+  ko: {
+    'app.title': 'Zentia 음성 길찾기',
+    'header.subtitle': '음성 길찾기',
+    'tts.title': 'TTS 켜기/끄기',
+    'tts.on': 'TTS 켜짐',
+    'tts.off': 'TTS 꺼짐',
+    'settings.title': '설정',
+    'settings.lang': '언어',
+    'settings.voice': '음성',
+    'settings.voice.none': '시스템 기본',
+    'settings.voice.preview': '미리듣기',
+    'settings.chipRadius': '칩 검색 반경',
+    'settings.chipRadius.hint': '"칩"으로 검색할 때 현재 위치 기준 반경',
+    'settings.advanced': '고급 설정',
+    'settings.webhookLabel': 'n8n Webhook URL',
+    'settings.webhookNote': 'n8n 워크플로우 활성화 후 Webhook URL을 복사해 붙여넣으세요.',
+    'settings.uidLabel': '내 ID',
+    'settings.cancel': '취소',
+    'settings.save': '저장',
+    'settings.webhookSaved': 'Webhook URL이 저장되었습니다.',
+    'settings.webhookCleared': 'Webhook URL을 삭제했습니다.',
+    'settings.saved': '설정이 저장되었습니다.',
+    'settings.webhookNeeded': '설정이 필요합니다. 오른쪽 상단 설정 버튼을 눌러 n8n Webhook URL을 입력해주세요.',
+    'settings.webhookNeededToast': 'Webhook URL을 설정해주세요.',
+    'voice.previewSample': '안녕하세요. 젠시아 음성 길찾기입니다.',
+    'tab.chat': '채팅',
+    'tab.fav': '즐겨찾기',
+    'transport.transit': '🚇 대중교통',
+    'transport.car': '🚗 자동차',
+    'transport.transit_short': '대중교통',
+    'transport.car_short': '자동차',
+    'mic.hint': '버튼을 누르고 말씀하세요',
+    'mic.listening': '듣고 있어요... (다시 누르면 중지)',
+    'mic.notAllowed': '마이크 권한을 허용해주세요.',
+    'mic.noSpeech': '음성이 감지되지 않았습니다.',
+    'mic.unsupported': '이 브라우저는 음성 인식을 지원하지 않습니다. 직접 입력해주세요.',
+    'mic.err': '음성 인식 오류: {0}',
+    'loc.loading': '위치 정보 가져오는 중...',
+    'loc.checking': '위치 확인 중...',
+    'loc.checkingAcc': '위치 확인 중... (오차 {0}m)',
+    'loc.ok': '위치 확인됨 (오차 {0}m)',
+    'loc.unsupported': '위치 서비스 미지원',
+    'loc.denied': '위치 권한 거부됨',
+    'loc.notfound': '위치를 찾을 수 없음',
+    'loc.timeout': '위치 요청 시간 초과',
+    'loc.err': '위치 오류',
+    'loc.fallback': '{0} — 서울시청 기준',
+    'loc.fallbackFail': '위치 확인 실패 — 서울시청 기준',
+    'loc.refresh': '위치 새로고침',
+    'chip.FD6': '맛집',
+    'chip.CE7': '카페',
+    'chip.CS2': '편의점',
+    'chip.PM9': '약국',
+    'chip.SW8': '지하철역',
+    'chip.PK6': '주차장',
+    'chip.BK9': '은행',
+    'chip.OL7': '주유소',
+    'chip.HP8': '병원',
+    'chip.MT1': '마트',
+    'tip.chips': '위 <strong>칩</strong>은 <strong>현재 위치 {0}km 이내</strong> 추천이에요',
+    'tip.elsewhere': '멀리 있는 곳은 <em>마이크</em>나 <em>아래 입력창</em>으로 검색해주세요',
+    'recent.title': '🕒 최근 검색',
+    'empty.subtitle': '검색 결과가 여기에 표시됩니다',
+    'input.placeholder': '목적지를 입력하세요',
+    'search.noResults': '검색 결과가 없습니다. 다른 목적지를 말씀해주세요.',
+    'search.noResultsTts': '검색 결과가 없습니다',
+    'search.summary': '"{0}" 검색 결과예요. ({1})',
+    'search.foundCount': '{0}곳을 찾았어요',
+    'search.error': '오류가 발생했습니다: {0}',
+    'search.networkErr': '네트워크 오류가 발생했습니다.',
+    'search.respFormat': '응답 형식 오류: {0}',
+    'search.summaryTts': '{0}곳을 찾았어요. 가장 가까운 곳은 {1} 거리의 {2}입니다.',
+    'search.noname': '이름 없음',
+    'nav.go': '길찾기 →',
+    'nav.start': '"{0}" 길찾기를 시작합니다! ({1})',
+    'nav.startTts': '{0} 길찾기를 시작합니다',
+    'nav.transit': '대중교통 🚇',
+    'nav.car': '자동차 🚗',
+    'nav.currentLoc': '현재위치',
+    'fav.empty': '즐겨찾기가 비어있어요.<br>검색 결과에서 ☆ 버튼을 눌러<br>자주 가는 곳을 저장하세요.',
+    'fav.deleted': '즐겨찾기에서 삭제했습니다.',
+    'fav.deletedName': '"{0}" 즐겨찾기에서 삭제했습니다.',
+    'fav.added': '"{0}" 즐겨찾기에 추가했습니다. ⭐',
+    'fav.aliasPrompt': '음성 호출 별칭을 입력하세요 (예: 집, 회사):',
+    'fav.aliasSaved': '"{0}" 별칭이 저장됐습니다.',
+    'fav.aliasDeleted': '별칭이 삭제됐습니다.',
+    'fav.aliasGoTts': '{0}으로 길찾기를 시작합니다',
+    'fav.alias.add': '+ 별칭',
+    'fav.alias.edit': '별칭 수정',
+    'fav.alias.set': '별칭 설정',
+    'inapp.copy': '🔗 링크 복사',
+    'inapp.copied': '링크가 복사됐습니다. Chrome에 붙여넣기 해주세요.',
+    'inapp.descIos': '음성 인식은 Safari 또는 Chrome에서 작동합니다. 링크를 복사해 다른 브라우저에서 열어주세요.',
+    'inapp.descChrome': '음성 인식은 Chrome에서만 작동합니다. Chrome으로 열어주세요.',
+    'inapp.openChrome': 'Chrome으로 열기',
+  },
+  en: {
+    'app.title': 'Zentia Voice Navigation',
+    'header.subtitle': 'Voice Nav',
+    'tts.title': 'Toggle TTS',
+    'tts.on': 'TTS on',
+    'tts.off': 'TTS off',
+    'settings.title': 'Settings',
+    'settings.lang': 'Language',
+    'settings.voice': 'Voice',
+    'settings.voice.none': 'System default',
+    'settings.voice.preview': 'Preview',
+    'settings.chipRadius': 'Chip search radius',
+    'settings.chipRadius.hint': 'Radius from your location for "chip" searches',
+    'settings.advanced': 'Advanced',
+    'settings.webhookLabel': 'n8n Webhook URL',
+    'settings.webhookNote': 'Activate your n8n workflow and paste the Webhook URL.',
+    'settings.uidLabel': 'My ID',
+    'settings.cancel': 'Cancel',
+    'settings.save': 'Save',
+    'settings.webhookSaved': 'Webhook URL saved.',
+    'settings.webhookCleared': 'Webhook URL cleared.',
+    'settings.saved': 'Settings saved.',
+    'settings.webhookNeeded': 'Setup required. Tap the settings icon and enter the n8n Webhook URL.',
+    'settings.webhookNeededToast': 'Please set the Webhook URL.',
+    'voice.previewSample': 'Hello, this is Zentia voice navigation.',
+    'tab.chat': 'Chat',
+    'tab.fav': 'Favorites',
+    'transport.transit': '🚇 Transit',
+    'transport.car': '🚗 Car',
+    'transport.transit_short': 'Transit',
+    'transport.car_short': 'Car',
+    'mic.hint': 'Tap and speak',
+    'mic.listening': 'Listening... (tap again to stop)',
+    'mic.notAllowed': 'Please allow microphone access.',
+    'mic.noSpeech': 'No speech detected.',
+    'mic.unsupported': 'This browser does not support voice recognition. Please type instead.',
+    'mic.err': 'Voice recognition error: {0}',
+    'loc.loading': 'Getting your location...',
+    'loc.checking': 'Checking location...',
+    'loc.checkingAcc': 'Checking... (±{0}m)',
+    'loc.ok': 'Located (±{0}m)',
+    'loc.unsupported': 'Geolocation not supported',
+    'loc.denied': 'Location permission denied',
+    'loc.notfound': 'Cannot determine location',
+    'loc.timeout': 'Location request timed out',
+    'loc.err': 'Location error',
+    'loc.fallback': '{0} — defaulting to Seoul City Hall',
+    'loc.fallbackFail': 'Location failed — defaulting to Seoul City Hall',
+    'loc.refresh': 'Refresh location',
+    'chip.FD6': 'Food',
+    'chip.CE7': 'Cafe',
+    'chip.CS2': 'Store',
+    'chip.PM9': 'Pharmacy',
+    'chip.SW8': 'Subway',
+    'chip.PK6': 'Parking',
+    'chip.BK9': 'Bank',
+    'chip.OL7': 'Gas',
+    'chip.HP8': 'Hospital',
+    'chip.MT1': 'Mart',
+    'tip.chips': 'The <strong>chips</strong> above show places within <strong>{0} km</strong> of you',
+    'tip.elsewhere': 'For distant places, use the <em>mic</em> or <em>text input</em> below',
+    'recent.title': '🕒 Recent',
+    'empty.subtitle': 'Search results will appear here',
+    'input.placeholder': 'Enter a destination',
+    'search.noResults': 'No results. Try a different destination.',
+    'search.noResultsTts': 'No results found',
+    'search.summary': 'Results for "{0}". ({1})',
+    'search.foundCount': 'Found {0} places',
+    'search.error': 'Error: {0}',
+    'search.networkErr': 'Network error.',
+    'search.respFormat': 'Response format error: {0}',
+    'search.summaryTts': 'Found {0} places. The nearest is {2}, {1} away.',
+    'search.noname': 'Unnamed',
+    'nav.go': 'Navigate →',
+    'nav.start': 'Starting navigation to "{0}"! ({1})',
+    'nav.startTts': 'Starting navigation to {0}',
+    'nav.transit': 'Transit 🚇',
+    'nav.car': 'Car 🚗',
+    'nav.currentLoc': 'My Location',
+    'fav.empty': 'No favorites yet.<br>Tap ☆ on a result<br>to save places you visit often.',
+    'fav.deleted': 'Removed from favorites.',
+    'fav.deletedName': 'Removed "{0}" from favorites.',
+    'fav.added': 'Added "{0}" to favorites. ⭐',
+    'fav.aliasPrompt': 'Enter a voice alias (e.g. home, office):',
+    'fav.aliasSaved': 'Alias "{0}" saved.',
+    'fav.aliasDeleted': 'Alias cleared.',
+    'fav.aliasGoTts': 'Starting navigation to {0}',
+    'fav.alias.add': '+ alias',
+    'fav.alias.edit': 'Edit alias',
+    'fav.alias.set': 'Set alias',
+    'inapp.copy': '🔗 Copy Link',
+    'inapp.copied': 'Link copied. Paste it in Chrome.',
+    'inapp.descIos': 'Voice recognition works in Safari or Chrome. Copy the link and open it elsewhere.',
+    'inapp.descChrome': 'Voice recognition only works in Chrome. Please open it in Chrome.',
+    'inapp.openChrome': 'Open in Chrome',
+  },
+};
+
+function t(key) {
+  var s = (I18N[currentLang] && I18N[currentLang][key]) || I18N.ko[key] || key;
+  for (var i = 1; i < arguments.length; i++) {
+    s = s.replace('{' + (i - 1) + '}', arguments[i]);
+  }
+  return s;
+}
+
+function applyI18n() {
+  document.documentElement.lang = currentLang;
+  document.title = t('app.title');
+  document.querySelectorAll('[data-i18n]').forEach(function(el) {
+    el.innerHTML = t(el.dataset.i18n);
+  });
+  document.querySelectorAll('[data-i18n-title]').forEach(function(el) {
+    el.title = t(el.dataset.i18nTitle);
+  });
+  document.querySelectorAll('[data-i18n-ph]').forEach(function(el) {
+    el.placeholder = t(el.dataset.i18nPh);
+  });
+  // Dynamic items that need re-rendering
+  var locStatusEl = document.getElementById('locStatus');
+  if (locStatusEl && !currentLocation && !locStatusEl.dataset.set) {
+    locStatusEl.textContent = t('loc.loading');
+  }
+  var tip = document.getElementById('usageTip');
+  if (tip) {
+    tip.innerHTML = '💡 ' + t('tip.chips', (chipRadius / 1000)) + '<br>' + t('tip.elsewhere');
+  }
+  renderFavorites && document.getElementById('panel-fav') && renderFavorites();
+  renderRecentSearches && renderRecentSearches();
+}
 
 let currentLocation = null;
 let locationReady = null;       // Promise: GPS + Nominatim 모두 완료
@@ -1221,9 +1569,50 @@ function speak(text) {
   if (!window.speechSynthesis) return;
   speechSynthesis.cancel();
   var utter = new SpeechSynthesisUtterance(text);
-  utter.lang = 'ko-KR';
+  utter.lang = currentLang === 'en' ? 'en-US' : 'ko-KR';
   utter.rate = 1.05;
+  var v = pickVoice();
+  if (v) utter.voice = v;
   speechSynthesis.speak(utter);
+}
+
+function pickVoice() {
+  if (!availableVoices.length) availableVoices = speechSynthesis.getVoices();
+  if (!availableVoices.length) return null;
+  if (selectedVoiceURI) {
+    var found = availableVoices.find(function(v) { return v.voiceURI === selectedVoiceURI; });
+    if (found && (currentLang === 'en' ? found.lang.startsWith('en') : found.lang.startsWith('ko'))) return found;
+  }
+  var prefix = currentLang === 'en' ? 'en' : 'ko';
+  return availableVoices.find(function(v) { return v.lang.startsWith(prefix); }) || null;
+}
+
+function loadVoices() {
+  availableVoices = speechSynthesis.getVoices ? speechSynthesis.getVoices() : [];
+  populateVoiceSelect();
+}
+
+function populateVoiceSelect() {
+  var sel = document.getElementById('voiceSelect');
+  if (!sel) return;
+  var prefix = currentLang === 'en' ? 'en' : 'ko';
+  var filtered = availableVoices.filter(function(v) { return v.lang.startsWith(prefix); });
+  sel.innerHTML = '<option value="">' + t('settings.voice.none') + '</option>' +
+    filtered.map(function(v) {
+      return '<option value="' + escAttr(v.voiceURI) + '"' + (v.voiceURI === selectedVoiceURI ? ' selected' : '') + '>' +
+        escHtml(v.name) + ' (' + v.lang + ')' +
+      '</option>';
+    }).join('');
+}
+
+function previewVoice() {
+  var sel = document.getElementById('voiceSelect');
+  var prevSelected = selectedVoiceURI;
+  selectedVoiceURI = sel ? sel.value : '';
+  var prevTts = ttsEnabled; ttsEnabled = true;
+  speak(t('voice.previewSample'));
+  ttsEnabled = prevTts;
+  selectedVoiceURI = prevSelected; // not yet committed until 저장
 }
 
 function toggleTTS() {
@@ -1231,7 +1620,7 @@ function toggleTTS() {
   localStorage.setItem('ttsEnabled', ttsEnabled ? 'true' : 'false');
   document.getElementById('ttsIconOn').style.display = ttsEnabled ? '' : 'none';
   document.getElementById('ttsIconOff').style.display = ttsEnabled ? 'none' : '';
-  showToast('TTS ' + (ttsEnabled ? '켜짐' : '꺼짐'));
+  showToast(ttsEnabled ? t('tts.on') : t('tts.off'));
 }
 
 function initTTSIcon() {
@@ -1271,7 +1660,7 @@ function checkFavoriteVoice(text) {
   var match = favs.find(function(f) { return (f.alias && clean.includes(f.alias)) || (f.name && clean.includes(f.name)); });
   if (match) {
     addUserMessage(text);
-    speak(match.name + '으로 길찾기를 시작합니다');
+    speak(t('fav.aliasGoTts', match.name));
     navigateTo(match.lat, match.lng, match.name);
     return true;
   }
@@ -1283,12 +1672,12 @@ function setFavoriteAlias(lat, lng) {
   var idx = favs.findIndex(function(f) { return Math.abs(f.lat - lat) < 0.0001 && Math.abs(f.lng - lng) < 0.0001; });
   if (idx < 0) return;
   var current = favs[idx].alias || '';
-  var alias = prompt('음성 호출 별칭을 입력하세요 (예: 집, 회사):', current);
+  var alias = prompt(t('fav.aliasPrompt'), current);
   if (alias === null) return;
   favs[idx].alias = alias.trim();
   saveFavorites(favs);
   renderFavorites();
-  showToast(alias ? '"' + alias + '" 별칭이 저장됐습니다.' : '별칭이 삭제됐습니다.');
+  showToast(alias ? t('fav.aliasSaved', alias) : t('fav.aliasDeleted'));
 }
 
 // ========================
@@ -1297,12 +1686,12 @@ function setFavoriteAlias(lat, lng) {
 function initLocation() {
   locationReady = new Promise(function(resolve) {
     if (!navigator.geolocation) {
-      setLocStatus('위치 서비스 미지원', 'err');
+      setLocStatus(t('loc.unsupported'), 'err');
       currentLocation = { lat: 37.5665, lng: 126.9780 };
       resolve();
       return;
     }
-    setLocStatus('위치 확인 중...', '');
+    setLocStatus(t('loc.checking'), '');
 
     var best = null;
     var resolved = false;
@@ -1315,15 +1704,15 @@ function initLocation() {
         var acc = pos.coords.accuracy;
         if (!best || acc < best.acc) {
           best = { lat: pos.coords.latitude, lng: pos.coords.longitude, acc: acc };
-          setLocStatus('위치 확인 중... (오차 ' + Math.round(acc) + 'm)', '');
+          setLocStatus(t('loc.checkingAcc', Math.round(acc)), '');
         }
         if (acc <= GOOD_ENOUGH && !resolved) finish();
       },
       function(err) {
         if (resolved) return;
         if (!best) {
-          var msgs = { 1: '위치 권한 거부됨', 2: '위치를 찾을 수 없음', 3: '위치 요청 시간 초과' };
-          setLocStatus((msgs[err.code] || '위치 오류') + ' — 서울시청 기준', 'err');
+          var msgs = { 1: t('loc.denied'), 2: t('loc.notfound'), 3: t('loc.timeout') };
+          setLocStatus(t('loc.fallback', msgs[err.code] || t('loc.err')), 'err');
           currentLocation = { lat: 37.5665, lng: 126.9780 };
           resolved = true;
           navigator.geolocation.clearWatch(watchId);
@@ -1340,7 +1729,7 @@ function initLocation() {
       resolved = true;
       navigator.geolocation.clearWatch(watchId);
       currentLocation = { lat: best.lat, lng: best.lng };
-      setLocStatus('위치 확인됨 (오차 ' + Math.round(best.acc) + 'm)', 'ok');
+      setLocStatus(t('loc.ok', Math.round(best.acc)), 'ok');
       fetchNearbyLandmark(best.lat, best.lng).then(resolve);
     }
 
@@ -1353,7 +1742,7 @@ function initLocation() {
         else {
           resolved = true;
           navigator.geolocation.clearWatch(watchId);
-          setLocStatus('위치 확인 실패 — 서울시청 기준', 'err');
+          setLocStatus(t('loc.fallbackFail'), 'err');
           currentLocation = { lat: 37.5665, lng: 126.9780 };
           resolve();
         }
@@ -1386,7 +1775,10 @@ function fetchNearbyLandmark(lat, lng) {
 }
 
 function setLocStatus(msg, type) {
-  document.getElementById('locStatus').textContent = msg;
+  var el = document.getElementById('locStatus');
+  el.textContent = msg;
+  el.dataset.set = '1';
+  el.removeAttribute('data-i18n');
   document.getElementById('locDot').className = 'loc-dot' + (type ? ' ' + type : '');
 }
 
@@ -1420,11 +1812,11 @@ function toggleRecording() {
 function startRecording() {
   var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) {
-    showToast('이 브라우저는 음성 인식을 지원하지 않습니다. 직접 입력해주세요.');
+    showToast(t('mic.unsupported'));
     return;
   }
   recognition = new SR();
-  recognition.lang = 'ko-KR';
+  recognition.lang = currentLang === 'en' ? 'en-US' : 'ko-KR';
   recognition.interimResults = false;
   recognition.maxAlternatives = 1;
 
@@ -1434,7 +1826,7 @@ function startRecording() {
     document.getElementById('micBtn').classList.add('recording');
     document.getElementById('micBtn').innerHTML = stopIcon;
     document.getElementById('micWrap').classList.add('recording-active');
-    document.getElementById('micHint').textContent = '듣고 있어요... (다시 누르면 중지)';
+    document.getElementById('micHint').textContent = t('mic.listening');
     document.getElementById('micHint').classList.add('recording');
   };
   recognition.onresult = function(e) {
@@ -1443,8 +1835,8 @@ function startRecording() {
   };
   recognition.onerror = function(e) {
     stopRecording();
-    var msgs = { 'not-allowed': '마이크 권한을 허용해주세요.', 'no-speech': '음성이 감지되지 않았습니다.' };
-    showToast(msgs[e.error] || '음성 인식 오류: ' + e.error);
+    var msgs = { 'not-allowed': t('mic.notAllowed'), 'no-speech': t('mic.noSpeech') };
+    showToast(msgs[e.error] || t('mic.err', e.error));
   };
   recognition.onend = function() { stopRecording(); };
   recognition.start();
@@ -1457,7 +1849,7 @@ function stopRecording() {
   document.getElementById('micBtn').classList.remove('recording');
   document.getElementById('micBtn').innerHTML = micIcon;
   document.getElementById('micWrap').classList.remove('recording-active');
-  document.getElementById('micHint').textContent = '버튼을 누르고 말씀하세요';
+  document.getElementById('micHint').textContent = t('mic.hint');
   document.getElementById('micHint').classList.remove('recording');
 }
 
@@ -1498,17 +1890,21 @@ function renderRecentSearches() {
   var list = getRecentSearches();
   if (!list.length) { box.style.display = 'none'; return; }
   box.style.display = 'block';
-  box.innerHTML = '<div class="recent-title">🕒 최근 검색</div><div class="recent-chips">' +
+  box.innerHTML = '<div class="recent-title">' + t('recent.title') + '</div><div class="recent-chips">' +
     list.map(function(r) {
       var onclickAttr = r.code
-        ? 'sendCategory(\'' + escAttr(r.code) + '\',\'' + escAttr(r.text) + '\')'
+        ? 'sendChip(\'' + escAttr(r.code) + '\')'
         : 'sendText(\'' + escAttr(r.text) + '\')';
-      return '<div class="recent-chip" onclick="' + onclickAttr + '">' + escHtml(r.text) + '</div>';
+      var label = r.code ? t('chip.' + r.code) : r.text;
+      return '<div class="recent-chip" onclick="' + onclickAttr + '">' + escHtml(label) + '</div>';
     }).join('') + '</div>';
 }
 
-function sendCategory(code, label) {
-  sendText(label, code, 'chip');
+function sendChip(code) {
+  sendText(t('chip.' + code), code, 'chip');
+}
+function sendCategory(code, label) { // legacy alias
+  sendText(label || t('chip.' + code), code, 'chip');
 }
 
 function sendText(text, categoryGroupCode, inputType) {
@@ -1520,8 +1916,8 @@ function sendText(text, categoryGroupCode, inputType) {
   saveRecentSearch(text, categoryGroupCode);
 
   if (!CONFIG.webhookUrl) {
-    addBotMessage('설정이 필요합니다. 오른쪽 상단 설정 버튼을 눌러 n8n Webhook URL을 입력해주세요.');
-    showToast('Webhook URL을 설정해주세요.');
+    addBotMessage(t('settings.webhookNeeded'));
+    showToast(t('settings.webhookNeededToast'));
     return;
   }
 
@@ -1545,6 +1941,8 @@ function doSearch(text, loadingId, categoryGroupCode, inputType) {
       inputType: inputType || 'text',
       userId,
       tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      chipRadius,
+      lang: currentLang,
     }),
   })
   .then(function(r) {
@@ -1554,14 +1952,14 @@ function doSearch(text, loadingId, categoryGroupCode, inputType) {
   .then(function(raw) {
     removeMessage(loadingId);
     if (!raw || !raw.trim()) {
-      addBotMessage('검색 결과가 없습니다. 다른 목적지를 말씀해주세요.');
-      if (ttsEnabled) speak('검색 결과가 없습니다');
+      addBotMessage(t('search.noResults'));
+      if (ttsEnabled) speak(t('search.noResultsTts'));
       return;
     }
     var data;
     try { data = JSON.parse(raw); }
     catch (e) {
-      addBotMessage('응답 형식 오류: ' + raw.slice(0, 100));
+      addBotMessage(t('search.respFormat', raw.slice(0, 100)));
       return;
     }
     // n8n이 배열로 감싸서 보내는 경우 처리
@@ -1572,18 +1970,18 @@ function doSearch(text, loadingId, categoryGroupCode, inputType) {
 
     if (mode !== transportMode) setTransport(mode);
     if (candidates.length === 0) {
-      addBotMessage('검색 결과가 없습니다. 다른 목적지를 말씀해주세요.');
-      speak('검색 결과가 없습니다.');
+      addBotMessage(t('search.noResults'));
+      speak(t('search.noResultsTts'));
     } else {
-      if (dest) addBotMessage('"' + dest + '" 검색 결과예요. (' + (mode === 'transit' ? '대중교통' : '자동차') + ')');
+      if (dest) addBotMessage(t('search.summary', dest, mode === 'transit' ? t('transport.transit_short') : t('transport.car_short')));
       showCandidates(candidates);
-      speak(candidates.length + '곳을 찾았어요. 가장 가까운 곳은 ' + (candidates[0].distanceLabel || '') + ' 거리의 ' + candidates[0].name + '입니다.');
+      speak(t('search.summaryTts', candidates.length, candidates[0].distanceLabel || '', candidates[0].name));
     }
   })
   .catch(function(err) {
     removeMessage(loadingId);
-    addBotMessage('오류가 발생했습니다: ' + err.message);
-    showToast('네트워크 오류가 발생했습니다.');
+    addBotMessage(t('search.error', err.message));
+    showToast(t('search.networkErr'));
   });
 }
 
@@ -1636,7 +2034,7 @@ function showCandidates(candidates) {
 
   var inner = document.createElement('div');
   inner.className = 'candidates-wrapper';
-  inner.innerHTML = '<div class="candidates-title">' + candidates.length + '곳을 찾았어요</div>';
+  inner.innerHTML = '<div class="candidates-title">' + t('search.foundCount', candidates.length) + '</div>';
 
   // Mini map preview (first candidate)
   if (candidates.length > 0) {
@@ -1665,7 +2063,7 @@ function showCandidates(candidates) {
       '<div class="card-row1">' +
         '<div class="card-num">' + place.index + '</div>' +
         '<div class="card-info">' +
-          '<div class="card-name">' + escHtml(place.name || '이름 없음') + '</div>' +
+          '<div class="card-name">' + escHtml(place.name || t('search.noname')) + '</div>' +
           '<div class="card-address">' + escHtml(place.address || '') + '</div>' +
         '</div>' +
       '</div>' +
@@ -1678,7 +2076,7 @@ function showCandidates(candidates) {
         '<div style="display:flex;gap:6px;align-items:center;">' +
           (place.phone ? '<a class="card-icon-btn" href="tel:' + escAttr(place.phone) + '" title="전화 ' + escAttr(place.phone) + '">📞</a>' : '') +
           (place.placeUrl ? '<a class="card-icon-btn" href="' + escAttr(place.placeUrl) + '" target="_blank" rel="noopener" title="카카오맵에서 보기">ⓘ</a>' : '') +
-          '<button class="card-select-btn" onclick="navigateTo(' + place.lat + ',' + place.lng + ',\'' + escAttr(place.name || '') + '\')">길찾기 →</button>' +
+          '<button class="card-select-btn" onclick="navigateTo(' + place.lat + ',' + place.lng + ',\'' + escAttr(place.name || '') + '\')">' + t('nav.go') + '</button>' +
         '</div>' +
       '</div>';
     inner.appendChild(card);
@@ -1700,12 +2098,12 @@ function navigateTo(dlat, dlng, dname, mode) {
   var enc = encodeURIComponent;
 
   var appUrl = mode === 'transit'
-    ? 'nmap://route/public?slat=' + slat + '&slng=' + slng + '&sname=' + enc('현재위치') + '&dlat=' + dlat + '&dlng=' + dlng + '&dname=' + enc(dname) + '&appname=' + appname
-    : 'nmap://route/car?slat=' + slat + '&slng=' + slng + '&sname=' + enc('현재위치') + '&dlat=' + dlat + '&dlng=' + dlng + '&dname=' + enc(dname) + '&appname=' + appname;
+    ? 'nmap://route/public?slat=' + slat + '&slng=' + slng + '&sname=' + enc(t('nav.currentLoc')) + '&dlat=' + dlat + '&dlng=' + dlng + '&dname=' + enc(dname) + '&appname=' + appname
+    : 'nmap://route/car?slat=' + slat + '&slng=' + slng + '&sname=' + enc(t('nav.currentLoc')) + '&dlat=' + dlat + '&dlng=' + dlng + '&dname=' + enc(dname) + '&appname=' + appname;
 
   var webUrl = mode === 'transit'
-    ? 'https://map.naver.com/v5/directions/' + slng + ',' + slat + ',' + enc('현재위치') + ',15,map/' + dlng + ',' + dlat + ',' + enc(dname) + ',15,map/-/transit?c=15,0,0,0,dh'
-    : 'https://map.naver.com/v5/directions/' + slng + ',' + slat + ',' + enc('현재위치') + ',15,map/' + dlng + ',' + dlat + ',' + enc(dname) + ',15,map/-/car?c=15,0,0,0,dh';
+    ? 'https://map.naver.com/v5/directions/' + slng + ',' + slat + ',' + enc(t('nav.currentLoc')) + ',15,map/' + dlng + ',' + dlat + ',' + enc(dname) + ',15,map/-/transit?c=15,0,0,0,dh'
+    : 'https://map.naver.com/v5/directions/' + slng + ',' + slat + ',' + enc(t('nav.currentLoc')) + ',15,map/' + dlng + ',' + dlat + ',' + enc(dname) + ',15,map/-/car?c=15,0,0,0,dh';
 
   var isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
   if (isMobile) {
@@ -1719,8 +2117,8 @@ function navigateTo(dlat, dlng, dname, mode) {
     window.open(webUrl, '_blank');
   }
 
-  addBotMessage('"' + dname + '" 길찾기를 시작합니다! (' + (mode === 'transit' ? '대중교통 🚇' : '자동차 🚗') + ')');
-  speak(dname + ' 길찾기를 시작합니다');
+  addBotMessage(t('nav.start', dname, mode === 'transit' ? t('nav.transit') : t('nav.car')));
+  speak(t('nav.startTts', dname));
 }
 
 // ========================
@@ -1752,11 +2150,11 @@ function toggleFavoriteFromCard(btn) {
   if (idx >= 0) {
     favs.splice(idx, 1);
     btn.textContent = '☆';
-    showToast('"' + name + '" 즐겨찾기에서 삭제했습니다.');
+    showToast(t('fav.deletedName', name));
   } else {
     favs.unshift({ lat, lng, name, address, category, savedAt: Date.now() });
     btn.textContent = '⭐';
-    showToast('"' + name + '" 즐겨찾기에 추가했습니다. ⭐');
+    showToast(t('fav.added', name));
   }
   saveFavorites(favs);
 }
@@ -1765,7 +2163,7 @@ function removeFavorite(lat, lng) {
   var favs = getFavorites().filter(function(f) { return !(Math.abs(f.lat - lat) < 0.0001 && Math.abs(f.lng - lng) < 0.0001); });
   saveFavorites(favs);
   renderFavorites();
-  showToast('즐겨찾기에서 삭제했습니다.');
+  showToast(t('fav.deleted'));
 }
 
 function renderFavorites() {
@@ -1779,7 +2177,7 @@ function renderFavorites() {
         '<div class="fav-empty-icon">' +
           '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>' +
         '</div>' +
-        '<p>즐겨찾기가 비어있어요.<br>검색 결과에서 ☆ 버튼을 눌러<br>자주 가는 곳을 저장하세요.</p>' +
+        '<p>' + t('fav.empty') + '</p>' +
       '</div>';
     return;
   }
@@ -1795,16 +2193,16 @@ function renderFavorites() {
         '<div class="fav-info">' +
           '<div class="fav-name">' + escHtml(f.name) +
             (f.alias
-              ? '<span class="fav-alias-badge" onclick="setFavoriteAlias(' + f.lat + ',' + f.lng + ')" title="별칭 수정">' + escHtml(f.alias) + '</span>'
-              : '<button class="fav-alias-btn" onclick="setFavoriteAlias(' + f.lat + ',' + f.lng + ')" title="별칭 설정">+ 별칭</button>'
+              ? '<span class="fav-alias-badge" onclick="setFavoriteAlias(' + f.lat + ',' + f.lng + ')" title="' + escAttr(t('fav.alias.edit')) + '">' + escHtml(f.alias) + '</span>'
+              : '<button class="fav-alias-btn" onclick="setFavoriteAlias(' + f.lat + ',' + f.lng + ')" title="' + escAttr(t('fav.alias.set')) + '">' + t('fav.alias.add') + '</button>'
             ) +
           '</div>' +
           '<div class="fav-address">' + escHtml(f.address || '') + '</div>' +
         '</div>' +
       '</div>' +
       '<div class="fav-row2">' +
-        '<button class="fav-transit-btn" onclick="navigateTo(' + f.lat + ',' + f.lng + ',\'' + escAttr(f.name) + '\',\'transit\')">🚇 대중교통</button>' +
-        '<button class="fav-car-btn" onclick="navigateTo(' + f.lat + ',' + f.lng + ',\'' + escAttr(f.name) + '\',\'car\')">🚗 자동차</button>' +
+        '<button class="fav-transit-btn" onclick="navigateTo(' + f.lat + ',' + f.lng + ',\'' + escAttr(f.name) + '\',\'transit\')">' + t('transport.transit') + '</button>' +
+        '<button class="fav-car-btn" onclick="navigateTo(' + f.lat + ',' + f.lng + ',\'' + escAttr(f.name) + '\',\'car\')">' + t('transport.car') + '</button>' +
         '<button class="fav-delete-btn" onclick="removeFavorite(' + f.lat + ',' + f.lng + ')">🗑</button>' +
       '</div>';
     panel.appendChild(item);
@@ -1822,16 +2220,58 @@ function updateFavCount() {
 function openConfig() {
   document.getElementById('webhookInput').value = CONFIG.webhookUrl;
   document.getElementById('userIdDisplay').textContent = userId;
+  // Language segmented control
+  document.querySelectorAll('#langSeg .seg-btn').forEach(function(b) {
+    b.classList.toggle('active', b.dataset.val === currentLang);
+  });
+  // Chip radius slider
+  var km = chipRadius / 1000;
+  document.getElementById('radiusSlider').value = km;
+  document.getElementById('radiusValue').textContent = km + ' km';
+  // Voices
+  loadVoices();
   document.getElementById('configModal').classList.add('open');
 }
 function closeConfig() {
   document.getElementById('configModal').classList.remove('open');
 }
+function setLangPick(lang) {
+  document.querySelectorAll('#langSeg .seg-btn').forEach(function(b) {
+    b.classList.toggle('active', b.dataset.val === lang);
+  });
+  // Provisional — apply on save only
+  document.getElementById('langSeg').dataset.pending = lang;
+  // Reload voice list filter immediately so preview reflects the pick
+  var prev = currentLang;
+  currentLang = lang;
+  populateVoiceSelect();
+  currentLang = prev;
+}
+function onRadiusInput(val) {
+  document.getElementById('radiusValue').textContent = val + ' km';
+}
 function saveConfig() {
   var url = document.getElementById('webhookInput').value.trim();
   CONFIG.webhookUrl = url;
   localStorage.setItem('webhookUrl', url);
-  showToast(url ? 'Webhook URL이 저장되었습니다.' : 'Webhook URL을 삭제했습니다.');
+
+  // Language
+  var pendingLang = document.getElementById('langSeg').dataset.pending || currentLang;
+  if (pendingLang !== currentLang) {
+    currentLang = pendingLang;
+    localStorage.setItem('lang', currentLang);
+  }
+  // Radius
+  var km = parseInt(document.getElementById('radiusSlider').value, 10) || 5;
+  chipRadius = km * 1000;
+  localStorage.setItem('chipRadius', chipRadius);
+  // Voice
+  var sel = document.getElementById('voiceSelect');
+  selectedVoiceURI = sel ? sel.value : '';
+  localStorage.setItem('voiceURI', selectedVoiceURI);
+
+  applyI18n();
+  showToast(t('settings.saved'));
   closeConfig();
 }
 document.getElementById('configModal').addEventListener('click', function(e) {
@@ -1883,7 +2323,7 @@ function detectInAppBrowser() {
   var appName = isKakao ? '카카오톡' : isNaver ? '네이버' : isInsta ? '인스타그램' : isFB ? '페이스북' : 'Line';
   var banner = document.getElementById('inappBanner');
   document.getElementById('inappTitle').textContent = appName + ' 브라우저에서 열렸어요';
-  document.getElementById('inappDesc').textContent = '음성 인식은 Chrome에서만 작동합니다. Chrome으로 열어주세요.';
+  document.getElementById('inappDesc').textContent = t('inapp.descChrome');
 
   // Android: intent scheme으로 Chrome 직접 실행 가능
   var isAndroid = /Android/i.test(ua);
@@ -1893,7 +2333,7 @@ function detectInAppBrowser() {
   } else {
     // iOS는 Chrome 강제 실행 불가 → 버튼 숨기고 링크 복사만 안내
     openBtn.style.display = 'none';
-    document.getElementById('inappDesc').textContent = '음성 인식은 Safari 또는 Chrome에서 작동합니다. 링크를 복사해 다른 브라우저에서 열어주세요.';
+    document.getElementById('inappDesc').textContent = t('inapp.descIos');
   }
 
   banner.classList.add('show');
@@ -1909,7 +2349,7 @@ function copyPageUrl() {
   var url = location.href;
   if (navigator.clipboard) {
     navigator.clipboard.writeText(url).then(function() {
-      showToast('링크가 복사됐습니다. Chrome에 붙여넣기 해주세요.');
+      showToast(t('inapp.copied'));
       document.getElementById('inappBanner').style.display = 'none';
     });
   } else {
@@ -1919,7 +2359,7 @@ function copyPageUrl() {
     el.select();
     document.execCommand('copy');
     document.body.removeChild(el);
-    showToast('링크가 복사됐습니다. Chrome에 붙여넣기 해주세요.');
+    showToast(t('inapp.copied'));
     document.getElementById('inappBanner').style.display = 'none';
   }
 }
@@ -1927,11 +2367,16 @@ function copyPageUrl() {
 // ========================
 // INIT
 // ========================
+applyI18n();
 detectInAppBrowser();
 initLocation();
 updateFavCount();
 renderRecentSearches();
 initTTSIcon();
+if (window.speechSynthesis) {
+  loadVoices();
+  speechSynthesis.onvoiceschanged = loadVoices;
+}
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').then(function(reg) {
