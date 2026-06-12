@@ -1094,6 +1094,7 @@ const CONFIG = {
 
 let currentLocation = null;
 let currentLocationName = '';  // 동네/건물명 (Naver 쿼리 보강용)
+let locationReady = null;       // Promise: GPS + Nominatim 모두 완료
 let transportMode = 'transit';
 let isRecording = false;
 let recognition = null;
@@ -1102,42 +1103,47 @@ let recognition = null;
 // GEOLOCATION
 // ========================
 function initLocation() {
-  if (!navigator.geolocation) {
-    setLocStatus('위치 서비스 미지원', 'err');
-    currentLocation = { lat: 37.5665, lng: 126.9780 };
-    return;
-  }
-  setLocStatus('위치 확인 중...', '');
-  navigator.geolocation.getCurrentPosition(
-    function(pos) {
-      var lat = pos.coords.latitude;
-      var lng = pos.coords.longitude;
-      var acc = Math.round(pos.coords.accuracy);
-      currentLocation = { lat: lat, lng: lng };
-      setLocStatus('위치 확인됨 (오차 ' + acc + 'm)', 'ok');
-      fetchNearbyLandmark(lat, lng);
-    },
-    function(err) {
-      var msgs = {
-        1: '위치 권한 거부됨',
-        2: '위치를 찾을 수 없음',
-        3: '위치 요청 시간 초과'
-      };
-      setLocStatus((msgs[err.code] || '위치 오류') + ' — 서울시청 기준', 'err');
+  locationReady = new Promise(function(resolve) {
+    if (!navigator.geolocation) {
+      setLocStatus('위치 서비스 미지원', 'err');
       currentLocation = { lat: 37.5665, lng: 126.9780 };
-    },
-    { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
-  );
+      resolve();
+      return;
+    }
+    setLocStatus('위치 확인 중...', '');
+    navigator.geolocation.getCurrentPosition(
+      function(pos) {
+        var lat = pos.coords.latitude;
+        var lng = pos.coords.longitude;
+        var acc = Math.round(pos.coords.accuracy);
+        currentLocation = { lat: lat, lng: lng };
+        setLocStatus('위치 확인됨 (오차 ' + acc + 'm)', 'ok');
+        fetchNearbyLandmark(lat, lng).then(resolve);
+      },
+      function(err) {
+        var msgs = {
+          1: '위치 권한 거부됨',
+          2: '위치를 찾을 수 없음',
+          3: '위치 요청 시간 초과'
+        };
+        setLocStatus((msgs[err.code] || '위치 오류') + ' — 서울시청 기준', 'err');
+        currentLocation = { lat: 37.5665, lng: 126.9780 };
+        resolve();
+      },
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
+    );
+  });
 }
 
 function refreshLocation() {
   document.getElementById('locationLandmark').style.display = 'none';
   currentLocation = null;
+  currentLocationName = '';
   initLocation();
 }
 
 function fetchNearbyLandmark(lat, lng) {
-  fetch('https://nominatim.openstreetmap.org/reverse?lat=' + lat + '&lon=' + lng + '&format=json&accept-language=ko&zoom=17', {
+  return fetch('https://nominatim.openstreetmap.org/reverse?lat=' + lat + '&lon=' + lng + '&format=json&accept-language=ko&zoom=17', {
     headers: { 'Accept-Language': 'ko' }
   })
   .then(function(r) { return r.json(); })
@@ -1260,7 +1266,14 @@ function sendText(text) {
   }
 
   var loadingId = addLoadingMessage();
-  fetch(CONFIG.webhookUrl, {
+
+  // 위치 정보(GPS + 랜드마크)가 완료될 때까지 대기 — 첫 진입 시 칩 클릭이 빨라서 locationName이 비는 문제 방지
+  var wait = locationReady || Promise.resolve();
+  wait.then(function() { return doSearch(text, loadingId); });
+}
+
+function doSearch(text, loadingId) {
+  return fetch(CONFIG.webhookUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
