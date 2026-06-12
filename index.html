@@ -590,11 +590,43 @@
     .mini-map-wrap { border-radius: 10px; overflow: hidden; margin-bottom: 8px; }
     .mini-map { width: 100%; height: 160px; border: none; border-radius: 10px; }
 
-    /* ─── Alias link ─────────────────────────── */
-    .fav-alias-link {
-      font-size: 11px; color: var(--primary); cursor: pointer;
-      background: none; border: none; padding: 0; margin-left: 6px;
-      text-decoration: underline;
+    /* ─── Alias badge / button ───────────────── */
+    .fav-alias-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--primary);
+      background: var(--primary-light);
+      border: 1px solid #e0e3ff;
+      padding: 2px 8px;
+      border-radius: 999px;
+      margin-left: 6px;
+      vertical-align: 1px;
+    }
+    .fav-alias-badge::before { content: "🏷️"; font-size: 10px; }
+    .fav-alias-badge { cursor: pointer; }
+    .fav-alias-badge:hover { background: #dde0ff; }
+    .fav-alias-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 11px;
+      color: var(--text-muted);
+      cursor: pointer;
+      background: transparent;
+      border: 1px dashed var(--border);
+      padding: 2px 8px;
+      border-radius: 999px;
+      margin-left: 6px;
+      transition: all 0.15s;
+    }
+    .fav-alias-btn:hover {
+      color: var(--primary);
+      border-color: var(--primary);
+      border-style: solid;
+      background: var(--primary-light);
     }
 
     /* ─── Persistent chips ───────────────────── */
@@ -1081,8 +1113,8 @@
   <div class="chat-area" id="chatArea">
     <div class="empty-state" id="emptyState">
       <div class="usage-tip">
-        💡 <strong>먼 곳을 찾으려면 동/구 이름과 함께</strong><br>
-        예) "<em>강남 잠실나루역</em>", "<em>홍대 스타벅스</em>", "<em>판교 카카오</em>"
+        💡 위 <strong>칩</strong>은 <strong>현재 위치 5km 이내</strong> 추천이에요<br>
+        멀리 있는 곳은 <em>마이크</em>나 <em>아래 입력창</em>으로 검색해주세요
       </div>
       <div id="recentSearches" class="recent-box" style="display:none;"></div>
       <p class="action-subtitle" style="margin-top:8px;">검색 결과가 여기에 표시됩니다</p>
@@ -1743,8 +1775,13 @@ function renderFavorites() {
           '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>' +
         '</div>' +
         '<div class="fav-info">' +
-          '<div class="fav-name">' + escHtml(f.name) + (f.alias ? ' <span style="font-size:11px;color:var(--primary);font-weight:500;">(' + escHtml(f.alias) + ')</span>' : '') + '</div>' +
-          '<div class="fav-address">' + escHtml(f.address || '') + ' <button class="fav-alias-link" onclick="setFavoriteAlias(' + f.lat + ',' + f.lng + ')" title="별칭 설정">별칭</button></div>' +
+          '<div class="fav-name">' + escHtml(f.name) +
+            (f.alias
+              ? '<span class="fav-alias-badge" onclick="setFavoriteAlias(' + f.lat + ',' + f.lng + ')" title="별칭 수정">' + escHtml(f.alias) + '</span>'
+              : '<button class="fav-alias-btn" onclick="setFavoriteAlias(' + f.lat + ',' + f.lng + ')" title="별칭 설정">+ 별칭</button>'
+            ) +
+          '</div>' +
+          '<div class="fav-address">' + escHtml(f.address || '') + '</div>' +
         '</div>' +
       '</div>' +
       '<div class="fav-row2">' +
