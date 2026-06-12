@@ -1093,8 +1093,6 @@ const CONFIG = {
 };
 
 let currentLocation = null;
-let currentLocationName = '';      // 기본 쿼리 보강용 (도로명 우선)
-let currentLocationDistrict = '';  // 동/구 — 지하철/역 검색 시 사용 (네이버가 도로명+역 매칭 못함)
 let locationReady = null;       // Promise: GPS + Nominatim 모두 완료
 let transportMode = 'transit';
 let isRecording = false;
@@ -1139,8 +1137,6 @@ function initLocation() {
 function refreshLocation() {
   document.getElementById('locationLandmark').style.display = 'none';
   currentLocation = null;
-  currentLocationName = '';
-  currentLocationDistrict = '';
   initLocation();
 }
 
@@ -1151,12 +1147,8 @@ function fetchNearbyLandmark(lat, lng) {
   .then(function(r) { return r.json(); })
   .then(function(data) {
     var a = data.address || {};
-    // UI 표시용: 도로명 또는 건물/시설명
+    // UI 표시용 (랜드마크 안내)
     var display = a.road || a.amenity || a.shop || a.office || a.building || a.neighbourhood || a.suburb || '';
-    // 기본 쿼리: 도로명 우선 (좁은 지역 → 거리순 정렬 시 진짜 가까운 곳)
-    currentLocationName = a.road || a.quarter || a.neighbourhood || a.suburb || a.city_district || a.district || '';
-    // 지하철/역 검색용: 동/구 단위
-    currentLocationDistrict = a.quarter || a.neighbourhood || a.suburb || a.city_district || a.district || a.county || '';
     if (display) {
       document.getElementById('landmarkText').textContent = display + ' 근처';
       document.getElementById('locationLandmark').style.display = 'block';
@@ -1277,12 +1269,6 @@ function sendText(text) {
 }
 
 function doSearch(text, loadingId) {
-  // 지하철/역 카테고리는 동/구로 검색(네이버가 도로명+역 매칭 못함), 그 외는 도로명으로 좁게 검색
-  var isStationQuery = /지하철|전철|역\b|역$|역\s/.test(text);
-  var locName = isStationQuery
-    ? (currentLocationDistrict || currentLocationName)
-    : (currentLocationName || currentLocationDistrict);
-
   return fetch(CONFIG.webhookUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -1291,7 +1277,6 @@ function doSearch(text, loadingId) {
       lat: currentLocation ? currentLocation.lat : 37.5665,
       lng: currentLocation ? currentLocation.lng : 126.9780,
       transportMode,
-      locationName: locName,
     }),
   })
   .then(function(r) {

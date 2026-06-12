@@ -1,5 +1,5 @@
 {
-  "name": "음성 길찾기 서비스",
+  "name": "음성 길찾기 서비스 (Kakao)",
   "nodes": [
     {
       "parameters": {
@@ -19,7 +19,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const body = $input.first().json.body || $input.first().json;\nconst text = body.text || '';\nconst userLat = parseFloat(body.lat) || 37.5665;\nconst userLng = parseFloat(body.lng) || 126.9780;\nconst userTransportMode = body.transportMode || 'transit';\nconst locationName = body.locationName || '';\n\n// '근처' 쿼리에 실제 동네명 붙이기 (예: '근처 맛집' → '역삼동 맛집')\nlet enrichedText = text;\nif (locationName && /근처/.test(text)) {\n  enrichedText = text.replace('근처', locationName);\n}\n\nreturn [{\n  json: {\n    text: enrichedText,\n    originalText: text,\n    userLat,\n    userLng,\n    userTransportMode,\n    locationName,\n  }\n}];"
+        "jsCode": "const body = $input.first().json.body || $input.first().json;\nconst text = (body.text || '').trim();\nconst userLat = parseFloat(body.lat) || 37.5665;\nconst userLng = parseFloat(body.lng) || 126.9780;\nconst userTransportMode = body.transportMode || 'transit';\n\n// 음성/텍스트 정제\nlet q = text;\n\n// '근처' 제거 — 카카오는 GPS 기반이라 불필요\nq = q.replace(/근처\\s*/g, '').trim();\n\n// 길찾기/찾아줘 등 액션 키워드 제거\nq = q.replace(/(으로|로)\\s*(가기|가는\\s*길|길찾기|안내|가자|갈래|가고\\s*싶어|가줘)/g, '').trim();\nq = q.replace(/(에|까지)\\s*(가기|가는\\s*길|길찾기|안내)/g, '').trim();\nq = q.replace(/(찾아줘|찾아주세요|알려줘|알려주세요|가줘)/g, '').trim();\n\n// 교통수단 모드 추출 + 키워드 제거\nlet mode = userTransportMode;\nif (/대중교통|버스|지하철|전철|기차|KTX|SRT/.test(text)) mode = 'transit';\nelse if (/자동차|차로|드라이브|운전|차량|차$|차로/.test(text)) mode = 'car';\nq = q.replace(/^(대중교통으로|자동차로|버스로|지하철로|도보로|차로)\\s*/g, '').trim();\n\nif (!q) q = text;\n\nreturn [{\n  json: {\n    query: q,\n    transportMode: mode,\n    userLat,\n    userLng,\n    originalText: text,\n  }\n}];"
       },
       "id": "prepare-input",
       "name": "입력 준비",
@@ -29,76 +29,14 @@
     },
     {
       "parameters": {
-        "method": "POST",
-        "url": "https://api.anthropic.com/v1/messages",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "x-api-key",
-              "value": "={{ $credentials.password }}"
-            },
-            {
-              "name": "anthropic-version",
-              "value": "2023-06-01"
-            },
-            {
-              "name": "content-type",
-              "value": "application/json"
-            }
-          ]
-        },
-        "sendBody": true,
-        "bodyParameters": {
-          "parameters": []
-        },
-        "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"claude-haiku-4-5-20251001\",\n  \"max_tokens\": 256,\n  \"system\": \"You are a Korean navigation assistant. Extract the destination place name and transport mode from the user's Korean input.\\n\\nRespond ONLY with a JSON object (no markdown, no explanation):\\n{\\\"destination\\\": \\\"<place name in Korean>\\\", \\\"transportMode\\\": \\\"transit\\\" or \\\"car\\\"}\\n\\nRules:\\n- destination: Extract only the place/location name (e.g. 강남역, 스타벅스 홍대점, 경복궁)\\n- transportMode: 'transit' for 대중교통/버스/지하철, 'car' for 자동차/차, default to the provided mode\\n- If the user says 대중교통/지하철/버스 → transit\\n- If the user says 자동차/차로/드라이브 → car\\n- Otherwise use the provided default mode\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Input text: {{ $json.text }}\\nDefault transport mode: {{ $json.userTransportMode }}\"\n    }\n  ]\n}",
-        "options": {
-          "response": {
-            "response": {
-              "responseFormat": "json"
-            }
-          }
-        }
-      },
-      "id": "claude-nlp",
-      "name": "Claude NLP",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
-      "position": [680, 300],
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "claude-api-credentials",
-          "name": "Claude API"
-        }
-      },
-      "continueOnFail": true
-    },
-    {
-      "parameters": {
-        "jsCode": "// Parse Claude response, fallback to regex if Claude failed\nconst claudeOutput = $input.first().json;\nconst inputData = $('입력 준비').first().json;\n\nlet destination = inputData.text;\nlet transportMode = inputData.userTransportMode;\n\n// Try to parse Claude's response\ntry {\n  const content = claudeOutput?.content?.[0]?.text || '';\n  if (content) {\n    const parsed = JSON.parse(content.trim());\n    if (parsed.destination) destination = parsed.destination;\n    if (parsed.transportMode) transportMode = parsed.transportMode;\n    console.log('Claude parsed:', parsed);\n  }\n} catch (e) {\n  console.log('Claude parsing failed, using regex fallback:', e.message);\n\n  // Regex fallback\n  const text = inputData.text;\n  if (/대중교통|버스|지하철|전철|기차|KTX|SRT/.test(text)) transportMode = 'transit';\n  else if (/자동차|차로|드라이브|운전|차량/.test(text)) transportMode = 'car';\n\n  const patterns = [\n    /(.+?)(?:으로|로)\\s*(?:가기|가는\\s*길|길찾기|안내)/,\n    /(.+?)(?:에|까지)\\s*(?:가기|가는\\s*길|길찾기|안내)/,\n    /(.+?)\\s*(?:가는\\s*길)/,\n    /(.+?)\\s*(?:찾아줘|찾아주세요|알려줘|알려주세요)/,\n    /(?:대중교통으로|자동차로|버스로|지하철로)?\\s*(.+?)(?:으로|로|에|까지)?\\s*(?:가기|가자|갈래|가고\\s*싶어)/,\n  ];\n  for (const pattern of patterns) {\n    const match = text.match(pattern);\n    if (match && match[1]) {\n      destination = match[1].replace(/^(?:대중교통으로|자동차로|버스로|지하철로|도보로)\\s*/, '').trim();\n      break;\n    }\n  }\n}\n\nconsole.log('Final:', { destination, transportMode });\n\nreturn [{\n  json: {\n    destination,\n    transportMode,\n    userLat: inputData.userLat,\n    userLng: inputData.userLng,\n    originalText: inputData.text,\n  }\n}];"
-      },
-      "id": "parse-claude-response",
-      "name": "목적지 파싱",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [900, 300]
-    },
-    {
-      "parameters": {
         "method": "GET",
-        "url": "https://openapi.naver.com/v1/search/local.json",
+        "url": "https://dapi.kakao.com/v2/local/search/keyword.json",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
-              "name": "X-Naver-Client-Id",
-              "value": "={{ $env.NAVER_CLIENT_ID }}"
-            },
-            {
-              "name": "X-Naver-Client-Secret",
-              "value": "={{ $env.NAVER_CLIENT_SECRET }}"
+              "name": "Authorization",
+              "value": "KakaoAK YOUR_KAKAO_REST_API_KEY"
             }
           ]
         },
@@ -107,19 +45,27 @@
           "parameters": [
             {
               "name": "query",
-              "value": "={{ $json.destination }}"
+              "value": "={{ $json.query }}"
             },
             {
-              "name": "display",
-              "value": "5"
+              "name": "x",
+              "value": "={{ $json.userLng }}"
             },
             {
-              "name": "start",
-              "value": "1"
+              "name": "y",
+              "value": "={{ $json.userLat }}"
+            },
+            {
+              "name": "radius",
+              "value": "5000"
             },
             {
               "name": "sort",
-              "value": "random"
+              "value": "distance"
+            },
+            {
+              "name": "size",
+              "value": "5"
             }
           ]
         },
@@ -131,21 +77,21 @@
           }
         }
       },
-      "id": "naver-search",
-      "name": "네이버 지역 검색",
+      "id": "kakao-search",
+      "name": "카카오 키워드 검색",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
-      "position": [1120, 300]
+      "position": [680, 300]
     },
     {
       "parameters": {
-        "jsCode": "const data = $input.first().json;\nconst parsedData = $('목적지 파싱').first().json;\n\nif (!data?.items?.length) {\n  return [{ json: { candidates: [], destination: parsedData.destination, transportMode: parsedData.transportMode } }];\n}\n\nconst toRad = d => d * Math.PI / 180;\nfunction haversine(lat1, lng1, lat2, lng2) {\n  const R = 6371000;\n  const dLat = toRad(lat2-lat1), dLng = toRad(lng2-lng1);\n  const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLng/2)**2;\n  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));\n}\n\nconst strip = s => (s||'').replace(/<[^>]*>/g,'');\nconst uLat = parsedData.userLat || 37.5665;\nconst uLng = parsedData.userLng || 126.9780;\nconst query = parsedData.destination || '';\nconst isSubwayQuery = /역$|지하철|전철/.test(query);\n\nconst candidates = data.items.map((item, i) => {\n  const lat = parseInt(item.mapy) / 10000000;\n  const lng = parseInt(item.mapx) / 10000000;\n  const dm = Math.round(haversine(uLat, uLng, lat, lng));\n  return {\n    index: i+1,\n    name: strip(item.title),\n    address: strip(item.roadAddress) || strip(item.address),\n    category: strip(item.category),\n    lat, lng,\n    distanceM: dm,\n    distanceLabel: dm < 1000 ? dm+'m' : (dm/1000).toFixed(1)+'km',\n  };\n});\n\n// 지하철 검색이면 지하철역 2000m 보너스, 아니면 순수 거리순\ncandidates.sort((a, b) => {\n  const subA = /지하철|전철/.test(a.category);\n  const subB = /지하철|전철/.test(b.category);\n  const bA = isSubwayQuery && subA ? -2000 : 0;\n  const bB = isSubwayQuery && subB ? -2000 : 0;\n  return (a.distanceM + bA) - (b.distanceM + bB);\n});\ncandidates.forEach((c, i) => { c.index = i+1; });\n\nreturn [{ json: { candidates, destination: parsedData.destination, transportMode: parsedData.transportMode } }];"
+        "jsCode": "const data = $input.first().json;\nconst input = $('입력 준비').first().json;\n\nconst docs = data?.documents || [];\nif (!docs.length) {\n  return [{ json: { candidates: [], destination: input.query, transportMode: input.transportMode } }];\n}\n\nconst candidates = docs.map((d, i) => {\n  const lat = parseFloat(d.y);\n  const lng = parseFloat(d.x);\n  const dm = parseInt(d.distance) || 0;\n  return {\n    index: i + 1,\n    name: d.place_name,\n    address: d.road_address_name || d.address_name || '',\n    category: d.category_group_name || (d.category_name || '').split(' > ').pop() || '',\n    lat, lng,\n    distanceM: dm,\n    distanceLabel: dm < 1000 ? dm + 'm' : (dm / 1000).toFixed(1) + 'km',\n    phone: d.phone || '',\n    placeUrl: d.place_url || '',\n  };\n});\n\nreturn [{ json: { candidates, destination: input.query, transportMode: input.transportMode } }];"
       },
       "id": "format-results",
       "name": "결과 포맷",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1340, 300]
+      "position": [900, 300]
     },
     {
       "parameters": {
@@ -154,22 +100,10 @@
         "options": {
           "responseHeaders": {
             "entries": [
-              {
-                "name": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "name": "Access-Control-Allow-Origin",
-                "value": "*"
-              },
-              {
-                "name": "Access-Control-Allow-Methods",
-                "value": "POST, GET, OPTIONS"
-              },
-              {
-                "name": "Access-Control-Allow-Headers",
-                "value": "Content-Type"
-              }
+              { "name": "Content-Type", "value": "application/json" },
+              { "name": "Access-Control-Allow-Origin", "value": "*" },
+              { "name": "Access-Control-Allow-Methods", "value": "POST, GET, OPTIONS" },
+              { "name": "Access-Control-Allow-Headers", "value": "Content-Type" }
             ]
           }
         }
@@ -178,7 +112,7 @@
       "name": "Webhook 응답",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
-      "position": [1560, 300]
+      "position": [1120, 300]
     }
   ],
   "connections": {
@@ -186,15 +120,9 @@
       "main": [[{ "node": "입력 준비", "type": "main", "index": 0 }]]
     },
     "입력 준비": {
-      "main": [[{ "node": "Claude NLP", "type": "main", "index": 0 }]]
+      "main": [[{ "node": "카카오 키워드 검색", "type": "main", "index": 0 }]]
     },
-    "Claude NLP": {
-      "main": [[{ "node": "목적지 파싱", "type": "main", "index": 0 }]]
-    },
-    "목적지 파싱": {
-      "main": [[{ "node": "네이버 지역 검색", "type": "main", "index": 0 }]]
-    },
-    "네이버 지역 검색": {
+    "카카오 키워드 검색": {
       "main": [[{ "node": "결과 포맷", "type": "main", "index": 0 }]]
     },
     "결과 포맷": {
@@ -207,6 +135,6 @@
   "staticData": null,
   "tags": [{ "name": "지도서비스" }],
   "triggerCount": 0,
-  "updatedAt": "2026-06-08T00:00:00.000Z",
-  "versionId": "2"
+  "updatedAt": "2026-06-12T00:00:00.000Z",
+  "versionId": "3"
 }
