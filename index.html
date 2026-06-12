@@ -1391,7 +1391,7 @@ function startRecording() {
   };
   recognition.onresult = function(e) {
     var transcript = e.results[0][0].transcript;
-    if (!checkVoiceCommand(transcript)) sendText(transcript);
+    if (!checkVoiceCommand(transcript)) sendText(transcript, '', 'voice');
   };
   recognition.onerror = function(e) {
     stopRecording();
@@ -1419,7 +1419,7 @@ function stopRecording() {
 function sendTextFromInput() {
   var input = document.getElementById('textInput');
   var text = input.value.trim();
-  if (text) { input.value = ''; sendText(text); }
+  if (text) { input.value = ''; sendText(text, '', 'text'); }
 }
 
 document.getElementById('textInput').addEventListener('keydown', function(e) {
@@ -1460,10 +1460,11 @@ function renderRecentSearches() {
 }
 
 function sendCategory(code, label) {
-  sendText(label, code);
+  sendText(label, code, 'chip');
 }
 
-function sendText(text, categoryGroupCode) {
+function sendText(text, categoryGroupCode, inputType) {
+  inputType = inputType || 'text';
   if (!categoryGroupCode && checkFavoriteVoice(text)) return;
   clearResults();
   hideEmptyState();
@@ -1480,10 +1481,10 @@ function sendText(text, categoryGroupCode) {
 
   // 위치 정보(GPS)가 완료될 때까지 대기
   var wait = locationReady || Promise.resolve();
-  wait.then(function() { return doSearch(text, loadingId, categoryGroupCode); });
+  wait.then(function() { return doSearch(text, loadingId, categoryGroupCode, inputType); });
 }
 
-function doSearch(text, loadingId, categoryGroupCode) {
+function doSearch(text, loadingId, categoryGroupCode, inputType) {
   return fetch(CONFIG.webhookUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -1493,6 +1494,7 @@ function doSearch(text, loadingId, categoryGroupCode) {
       lng: currentLocation ? currentLocation.lng : 126.9780,
       transportMode,
       categoryGroupCode: categoryGroupCode || '',
+      inputType: inputType || 'text',
     }),
   })
   .then(function(r) {
