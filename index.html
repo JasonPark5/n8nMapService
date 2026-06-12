@@ -429,6 +429,27 @@
       transform: scale(1.02);
     }
     .card-select-btn:active { transform: scale(0.98); }
+    .card-icon-btn {
+      width: 30px; height: 30px;
+      border: 1px solid var(--border); background: var(--card-bg);
+      border-radius: 8px; cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center;
+      color: var(--text-secondary); text-decoration: none;
+      font-size: 14px; transition: all 0.15s;
+    }
+    .card-icon-btn:hover { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
+
+    /* ─── Recent searches ─────────────────────── */
+    .recent-box { width: 100%; padding: 8px 4px; }
+    .recent-title { font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; text-align: left; padding-left: 4px; }
+    .recent-chips { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-start; }
+    .recent-chip {
+      background: var(--card-bg); border: 1px solid var(--border);
+      border-radius: 100px; padding: 5px 12px;
+      font-size: 12px; color: var(--text); cursor: pointer;
+      transition: all 0.15s;
+    }
+    .recent-chip:hover { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
 
     /* ─── Favorites panel ─────────────────────── */
     .fav-panel {
@@ -1005,22 +1026,23 @@
 
   <!-- Persistent chips (always visible) -->
   <div class="persistent-chips">
-    <div class="chip" onclick="sendText('근처 맛집')"><span class="chip-icon">🍽️</span>맛집</div>
-    <div class="chip" onclick="sendText('근처 카페')"><span class="chip-icon">☕</span>카페</div>
-    <div class="chip" onclick="sendText('근처 편의점')"><span class="chip-icon">🏪</span>편의점</div>
-    <div class="chip" onclick="sendText('근처 약국')"><span class="chip-icon">💊</span>약국</div>
-    <div class="chip" onclick="sendText('근처 지하철역')"><span class="chip-icon">🚇</span>지하철역</div>
-    <div class="chip" onclick="sendText('근처 주차장')"><span class="chip-icon">🅿️</span>주차장</div>
-    <div class="chip" onclick="sendText('근처 은행')"><span class="chip-icon">🏦</span>은행</div>
-    <div class="chip" onclick="sendText('근처 주유소')"><span class="chip-icon">⛽</span>주유소</div>
-    <div class="chip" onclick="sendText('근처 병원')"><span class="chip-icon">🏥</span>병원</div>
-    <div class="chip" onclick="sendText('근처 마트')"><span class="chip-icon">🛒</span>마트</div>
+    <div class="chip" onclick="sendCategory('FD6','맛집')"><span class="chip-icon">🍽️</span>맛집</div>
+    <div class="chip" onclick="sendCategory('CE7','카페')"><span class="chip-icon">☕</span>카페</div>
+    <div class="chip" onclick="sendCategory('CS2','편의점')"><span class="chip-icon">🏪</span>편의점</div>
+    <div class="chip" onclick="sendCategory('PM9','약국')"><span class="chip-icon">💊</span>약국</div>
+    <div class="chip" onclick="sendCategory('SW8','지하철역')"><span class="chip-icon">🚇</span>지하철역</div>
+    <div class="chip" onclick="sendCategory('PK6','주차장')"><span class="chip-icon">🅿️</span>주차장</div>
+    <div class="chip" onclick="sendCategory('BK9','은행')"><span class="chip-icon">🏦</span>은행</div>
+    <div class="chip" onclick="sendCategory('OL7','주유소')"><span class="chip-icon">⛽</span>주유소</div>
+    <div class="chip" onclick="sendCategory('HP8','병원')"><span class="chip-icon">🏥</span>병원</div>
+    <div class="chip" onclick="sendCategory('MT1','마트')"><span class="chip-icon">🛒</span>마트</div>
   </div>
 
   <!-- Chat / results area (scrollable) -->
   <div class="chat-area" id="chatArea">
     <div class="empty-state" id="emptyState">
-      <p class="action-subtitle" style="margin-top:16px;">검색 결과가 여기에 표시됩니다</p>
+      <div id="recentSearches" class="recent-box" style="display:none;"></div>
+      <p class="action-subtitle" style="margin-top:8px;">검색 결과가 여기에 표시됩니다</p>
     </div>
   </div>
 
@@ -1110,27 +1132,62 @@ function initLocation() {
       return;
     }
     setLocStatus('위치 확인 중...', '');
-    navigator.geolocation.getCurrentPosition(
+
+    var best = null;
+    var resolved = false;
+    var GOOD_ENOUGH = 30;   // 30m 이하면 즉시 확정
+    var MAX_WAIT   = 8000;  // 최대 8초 수집
+    var EARLY_OK   = 100;   // 100m 이하면 4초만 더 기다리고 마감
+
+    var watchId = navigator.geolocation.watchPosition(
       function(pos) {
-        var lat = pos.coords.latitude;
-        var lng = pos.coords.longitude;
-        var acc = Math.round(pos.coords.accuracy);
-        currentLocation = { lat: lat, lng: lng };
-        setLocStatus('위치 확인됨 (오차 ' + acc + 'm)', 'ok');
-        fetchNearbyLandmark(lat, lng).then(resolve);
+        var acc = pos.coords.accuracy;
+        if (!best || acc < best.acc) {
+          best = { lat: pos.coords.latitude, lng: pos.coords.longitude, acc: acc };
+          setLocStatus('위치 확인 중... (오차 ' + Math.round(acc) + 'm)', '');
+        }
+        if (acc <= GOOD_ENOUGH && !resolved) finish();
       },
       function(err) {
-        var msgs = {
-          1: '위치 권한 거부됨',
-          2: '위치를 찾을 수 없음',
-          3: '위치 요청 시간 초과'
-        };
-        setLocStatus((msgs[err.code] || '위치 오류') + ' — 서울시청 기준', 'err');
-        currentLocation = { lat: 37.5665, lng: 126.9780 };
-        resolve();
+        if (resolved) return;
+        if (!best) {
+          var msgs = { 1: '위치 권한 거부됨', 2: '위치를 찾을 수 없음', 3: '위치 요청 시간 초과' };
+          setLocStatus((msgs[err.code] || '위치 오류') + ' — 서울시청 기준', 'err');
+          currentLocation = { lat: 37.5665, lng: 126.9780 };
+          resolved = true;
+          navigator.geolocation.clearWatch(watchId);
+          resolve();
+        } else {
+          finish();
+        }
       },
       { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
     );
+
+    function finish() {
+      if (resolved) return;
+      resolved = true;
+      navigator.geolocation.clearWatch(watchId);
+      currentLocation = { lat: best.lat, lng: best.lng };
+      setLocStatus('위치 확인됨 (오차 ' + Math.round(best.acc) + 'm)', 'ok');
+      fetchNearbyLandmark(best.lat, best.lng).then(resolve);
+    }
+
+    setTimeout(function() {
+      if (!resolved && best && best.acc <= EARLY_OK) finish();
+    }, 4000);
+    setTimeout(function() {
+      if (!resolved) {
+        if (best) finish();
+        else {
+          resolved = true;
+          navigator.geolocation.clearWatch(watchId);
+          setLocStatus('위치 확인 실패 — 서울시청 기준', 'err');
+          currentLocation = { lat: 37.5665, lng: 126.9780 };
+          resolve();
+        }
+      }
+    }, MAX_WAIT);
   });
 }
 
@@ -1250,10 +1307,41 @@ function clearResults() {
   if (emptyState) chatArea.appendChild(emptyState);
 }
 
-function sendText(text) {
+// 최근 검색 (최대 5개)
+function getRecentSearches() {
+  try { return JSON.parse(localStorage.getItem('recentSearches') || '[]'); } catch(e) { return []; }
+}
+function saveRecentSearch(text, categoryGroupCode) {
+  var list = getRecentSearches().filter(function(r) { return r.text !== text; });
+  list.unshift({ text: text, code: categoryGroupCode || '', ts: Date.now() });
+  list = list.slice(0, 5);
+  localStorage.setItem('recentSearches', JSON.stringify(list));
+  renderRecentSearches();
+}
+function renderRecentSearches() {
+  var box = document.getElementById('recentSearches');
+  if (!box) return;
+  var list = getRecentSearches();
+  if (!list.length) { box.style.display = 'none'; return; }
+  box.style.display = 'block';
+  box.innerHTML = '<div class="recent-title">🕒 최근 검색</div><div class="recent-chips">' +
+    list.map(function(r) {
+      var onclickAttr = r.code
+        ? 'sendCategory(\'' + escAttr(r.code) + '\',\'' + escAttr(r.text) + '\')'
+        : 'sendText(\'' + escAttr(r.text) + '\')';
+      return '<div class="recent-chip" onclick="' + onclickAttr + '">' + escHtml(r.text) + '</div>';
+    }).join('') + '</div>';
+}
+
+function sendCategory(code, label) {
+  sendText(label, code);
+}
+
+function sendText(text, categoryGroupCode) {
   clearResults();
   hideEmptyState();
   addUserMessage(text);
+  saveRecentSearch(text, categoryGroupCode);
 
   if (!CONFIG.webhookUrl) {
     addBotMessage('설정이 필요합니다. 오른쪽 상단 설정 버튼을 눌러 n8n Webhook URL을 입력해주세요.');
@@ -1263,12 +1351,12 @@ function sendText(text) {
 
   var loadingId = addLoadingMessage();
 
-  // 위치 정보(GPS + 랜드마크)가 완료될 때까지 대기 — 첫 진입 시 칩 클릭이 빨라서 locationName이 비는 문제 방지
+  // 위치 정보(GPS)가 완료될 때까지 대기
   var wait = locationReady || Promise.resolve();
-  wait.then(function() { return doSearch(text, loadingId); });
+  wait.then(function() { return doSearch(text, loadingId, categoryGroupCode); });
 }
 
-function doSearch(text, loadingId) {
+function doSearch(text, loadingId, categoryGroupCode) {
   return fetch(CONFIG.webhookUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -1277,6 +1365,7 @@ function doSearch(text, loadingId) {
       lat: currentLocation ? currentLocation.lat : 37.5665,
       lng: currentLocation ? currentLocation.lng : 126.9780,
       transportMode,
+      categoryGroupCode: categoryGroupCode || '',
     }),
   })
   .then(function(r) {
@@ -1379,7 +1468,11 @@ function showCandidates(candidates) {
           (place.category ? '<span class="card-category">' + escHtml(place.category) + '</span>' : '') +
           (place.distanceLabel ? '<span class="card-distance">' + place.distanceLabel + '</span>' : '') +
         '</div>' +
-        '<button class="card-select-btn" onclick="navigateTo(' + place.lat + ',' + place.lng + ',\'' + escAttr(place.name || '') + '\')">길찾기 →</button>' +
+        '<div style="display:flex;gap:6px;align-items:center;">' +
+          (place.phone ? '<a class="card-icon-btn" href="tel:' + escAttr(place.phone) + '" title="전화 ' + escAttr(place.phone) + '">📞</a>' : '') +
+          (place.placeUrl ? '<a class="card-icon-btn" href="' + escAttr(place.placeUrl) + '" target="_blank" rel="noopener" title="카카오맵에서 보기">ⓘ</a>' : '') +
+          '<button class="card-select-btn" onclick="navigateTo(' + place.lat + ',' + place.lng + ',\'' + escAttr(place.name || '') + '\')">길찾기 →</button>' +
+        '</div>' +
       '</div>';
     inner.appendChild(card);
   });
@@ -1619,6 +1712,7 @@ function copyPageUrl() {
 detectInAppBrowser();
 initLocation();
 updateFavCount();
+renderRecentSearches();
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').then(function(reg) {

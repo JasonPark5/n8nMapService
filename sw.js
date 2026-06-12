@@ -1,4 +1,4 @@
-const CACHE = 'zentia-v3';
+const CACHE = 'zentia-v4';
 const ASSETS = [
   '/n8nMapService/',
   '/n8nMapService/index.html',
