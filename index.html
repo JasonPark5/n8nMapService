@@ -1592,10 +1592,11 @@ function loadVoices() {
   populateVoiceSelect();
 }
 
-function populateVoiceSelect() {
+function populateVoiceSelect(uiLang) {
   var sel = document.getElementById('voiceSelect');
   if (!sel) return;
-  var prefix = currentLang === 'en' ? 'en' : 'ko';
+  var lang = uiLang || currentLang;
+  var prefix = lang === 'en' ? 'en' : 'ko';
   var filtered = availableVoices.filter(function(v) { return v.lang.startsWith(prefix); });
   sel.innerHTML = '<option value="">' + t('settings.voice.none') + '</option>' +
     filtered.map(function(v) {
@@ -1607,11 +1608,17 @@ function populateVoiceSelect() {
 
 function previewVoice() {
   if (!window.speechSynthesis) return;
+  // Read the CURRENT (uncommitted) UI selections, not the saved state
+  var seg = document.getElementById('langSeg');
+  var activeBtn = seg ? seg.querySelector('.seg-btn.active') : null;
+  var uiLang = (activeBtn && activeBtn.dataset.val) || seg.dataset.pending || currentLang;
   var sel = document.getElementById('voiceSelect');
   var previewURI = sel ? sel.value : '';
+
+  var sampleByLang = { ko: I18N.ko['voice.previewSample'], en: I18N.en['voice.previewSample'] };
   speechSynthesis.cancel();
-  var utter = new SpeechSynthesisUtterance(t('voice.previewSample'));
-  utter.lang = currentLang === 'en' ? 'en-US' : 'ko-KR';
+  var utter = new SpeechSynthesisUtterance(sampleByLang[uiLang] || sampleByLang.ko);
+  utter.lang = uiLang === 'en' ? 'en-US' : 'ko-KR';
   utter.rate = 1.05;
   if (previewURI) {
     var v = availableVoices.find(function(v) { return v.voiceURI === previewURI; });
@@ -2246,11 +2253,8 @@ function setLangPick(lang) {
   });
   // Provisional — apply on save only
   document.getElementById('langSeg').dataset.pending = lang;
-  // Reload voice list filter immediately so preview reflects the pick
-  var prev = currentLang;
-  currentLang = lang;
-  populateVoiceSelect();
-  currentLang = prev;
+  // Reload voice list filtered by the chosen language (no global state mutation)
+  populateVoiceSelect(lang);
 }
 function onRadiusInput(val) {
   document.getElementById('radiusValue').textContent = val + ' km';
