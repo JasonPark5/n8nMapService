@@ -19,7 +19,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const body = $input.first().json.body || $input.first().json;\nconst text = (body.text || '').trim();\nconst userLat = parseFloat(body.lat) || 37.5665;\nconst userLng = parseFloat(body.lng) || 126.9780;\nconst userTransportMode = body.transportMode || 'transit';\nconst categoryGroupCode = (body.categoryGroupCode || '').trim();\n\n// 음성/텍스트 정제\nlet q = text;\nq = q.replace(/근처\\s*/g, '').trim();\nq = q.replace(/(으로|로)\\s*(가기|가는\\s*길|길찾기|안내|가자|갈래|가고\\s*싶어|가줘)/g, '').trim();\nq = q.replace(/(에|까지)\\s*(가기|가는\\s*길|길찾기|안내)/g, '').trim();\nq = q.replace(/(찾아줘|찾아주세요|알려줘|알려주세요|가줘)/g, '').trim();\n\n// 교통수단 모드 추출\nlet mode = userTransportMode;\nif (/대중교통|버스|지하철|전철|기차|KTX|SRT/.test(text)) mode = 'transit';\nelse if (/자동차|차로|드라이브|운전|차량|차$|차로/.test(text)) mode = 'car';\nq = q.replace(/^(대중교통으로|자동차로|버스로|지하철로|도보로|차로)\\s*/g, '').trim();\n\nif (!q) q = text;\n\nreturn [{\n  json: {\n    query: q,\n    categoryGroupCode,\n    transportMode: mode,\n    userLat,\n    userLng,\n    originalText: text,\n  }\n}];"
+        "jsCode": "const body = $input.first().json.body || $input.first().json;\nconst text = (body.text || '').trim();\nconst userLat = parseFloat(body.lat) || 37.5665;\nconst userLng = parseFloat(body.lng) || 126.9780;\nconst userTransportMode = body.transportMode || 'transit';\nconst categoryGroupCode = (body.categoryGroupCode || '').trim();\n\nlet q = text;\nq = q.replace(/근처\\s*/g, '').trim();\nq = q.replace(/(으로|로)\\s*(가기|가는\\s*길|길찾기|안내|가자|갈래|가고\\s*싶어|가줘)/g, '').trim();\nq = q.replace(/(에|까지)\\s*(가기|가는\\s*길|길찾기|안내)/g, '').trim();\nq = q.replace(/(찾아줘|찾아주세요|알려줘|알려주세요|가줘)/g, '').trim();\n\nlet mode = userTransportMode;\nif (/대중교통|버스|지하철|전철|기차|KTX|SRT/.test(text)) mode = 'transit';\nelse if (/자동차|차로|드라이브|운전|차량|차$|차로/.test(text)) mode = 'car';\nq = q.replace(/^(대중교통으로|자동차로|버스로|지하철로|도보로|차로)\\s*/g, '').trim();\n\nif (!q) q = text;\n\n// 카카오 API 쿼리 파라미터 객체로 구성 (빈 category_group_code 거부 문제 회피)\nconst queryParams = {\n  query: q,\n  x: userLng,\n  y: userLat,\n  radius: '5000',\n  sort: 'distance',\n  size: '10',\n};\nif (categoryGroupCode) queryParams.category_group_code = categoryGroupCode;\n\nreturn [{\n  json: {\n    query: q,\n    categoryGroupCode,\n    transportMode: mode,\n    userLat,\n    userLng,\n    originalText: text,\n    queryParams,\n  }\n}];"
       },
       "id": "prepare-input",
       "name": "입력 준비",
@@ -41,38 +41,8 @@
           ]
         },
         "sendQuery": true,
-        "queryParameters": {
-          "parameters": [
-            {
-              "name": "query",
-              "value": "={{ $json.query }}"
-            },
-            {
-              "name": "category_group_code",
-              "value": "={{ $json.categoryGroupCode }}"
-            },
-            {
-              "name": "x",
-              "value": "={{ $json.userLng }}"
-            },
-            {
-              "name": "y",
-              "value": "={{ $json.userLat }}"
-            },
-            {
-              "name": "radius",
-              "value": "5000"
-            },
-            {
-              "name": "sort",
-              "value": "distance"
-            },
-            {
-              "name": "size",
-              "value": "10"
-            }
-          ]
-        },
+        "specifyQuery": "json",
+        "jsonQuery": "={{ JSON.stringify($json.queryParams) }}",
         "options": {
           "response": {
             "response": {
