@@ -1177,6 +1177,9 @@
     <label>n8n Webhook URL</label>
     <input type="url" id="webhookInput" placeholder="https://your-n8n.com/webhook/map-search" />
     <div class="modal-note">n8n 워크플로우 활성화 후 Webhook URL을 복사해 붙여넣으세요.</div>
+    <div class="modal-note" style="margin-top:10px;">
+      내 ID: <code id="userIdDisplay" style="font-size:11px;color:var(--text-secondary);user-select:all;"></code>
+    </div>
     <div class="modal-actions">
       <button class="btn-secondary" onclick="closeConfig()">취소</button>
       <button class="btn-primary" onclick="saveConfig()">저장</button>
@@ -1199,6 +1202,16 @@ let isRecording = false;
 let recognition = null;
 let lastCandidates = [];
 let ttsEnabled = localStorage.getItem('ttsEnabled') !== 'false';
+
+// 사용자 식별자 (브라우저+도메인 단위, localStorage 삭제 시 재발급)
+let userId = localStorage.getItem('zentia_uid');
+if (!userId) {
+  userId = (crypto && crypto.randomUUID)
+    ? crypto.randomUUID()
+    : 'u-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+  localStorage.setItem('zentia_uid', userId);
+  localStorage.setItem('zentia_uid_created', new Date().toISOString());
+}
 
 // ========================
 // TTS
@@ -1530,6 +1543,8 @@ function doSearch(text, loadingId, categoryGroupCode, inputType) {
       transportMode,
       categoryGroupCode: categoryGroupCode || '',
       inputType: inputType || 'text',
+      userId,
+      tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
     }),
   })
   .then(function(r) {
@@ -1806,6 +1821,7 @@ function updateFavCount() {
 // ========================
 function openConfig() {
   document.getElementById('webhookInput').value = CONFIG.webhookUrl;
+  document.getElementById('userIdDisplay').textContent = userId;
   document.getElementById('configModal').classList.add('open');
 }
 function closeConfig() {
