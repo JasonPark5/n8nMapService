@@ -352,6 +352,27 @@
       background: var(--primary);
       color: #fff;
     }
+    .candidate-card.ai-pick {
+      border-color: var(--primary);
+      background: linear-gradient(180deg, #f7f8ff 0%, #ffffff 60%);
+    }
+    .ai-pick-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--primary);
+      background: var(--primary-light);
+      border: 1px solid #d6d9ff;
+      padding: 4px 10px;
+      border-radius: 999px;
+      margin-bottom: 10px;
+    }
+    .ai-pick-badge .ai-reason {
+      font-weight: 500;
+      color: var(--text);
+    }
     .card-row1 {
       display: flex;
       align-items: flex-start;
@@ -1558,6 +1579,7 @@ function applyI18n() {
 }
 
 let currentLocation = null;
+let currentLandmark = '';        // 현재 위치 도로명/장소명 (Nominatim)
 let locationReady = null;       // Promise: GPS + Nominatim 모두 완료
 let transportMode = 'transit';
 let isRecording = false;
@@ -1793,6 +1815,7 @@ function fetchNearbyLandmark(lat, lng) {
     // UI 표시용 (랜드마크 안내)
     var display = a.road || a.amenity || a.shop || a.office || a.building || a.neighbourhood || a.suburb || '';
     if (display) {
+      currentLandmark = display;
       document.getElementById('landmarkText').textContent = display + ' 근처';
       document.getElementById('locationLandmark').style.display = 'block';
     }
@@ -1955,6 +1978,13 @@ function sendText(text, categoryGroupCode, inputType) {
 }
 
 function doSearch(text, loadingId, categoryGroupCode, inputType) {
+  // 즐겨찾기 / 최근검색을 LLM 컨텍스트로 같이 전송 (chip은 굳이 안 보내도 됨)
+  var favs = (typeof getFavorites === 'function' ? getFavorites() : []).map(function(f) {
+    return { name: f.name, alias: f.alias || '', lat: f.lat, lng: f.lng };
+  });
+  var recent = (typeof getRecentSearches === 'function' ? getRecentSearches() : []).slice(0, 5).map(function(r) {
+    return { text: r.text, code: r.code || '' };
+  });
   return fetch(CONFIG.webhookUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -1962,6 +1992,7 @@ function doSearch(text, loadingId, categoryGroupCode, inputType) {
       text,
       lat: currentLocation ? currentLocation.lat : 37.5665,
       lng: currentLocation ? currentLocation.lng : 126.9780,
+      landmark: currentLandmark || '',
       transportMode,
       categoryGroupCode: categoryGroupCode || '',
       inputType: inputType || 'text',
@@ -1969,6 +2000,9 @@ function doSearch(text, loadingId, categoryGroupCode, inputType) {
       tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
       chipRadius,
       lang: currentLang,
+      favorites: favs,
+      recentSearches: recent,
+      localTime: new Date().toISOString(),
     }),
   })
   .then(function(r) {
@@ -1993,15 +2027,28 @@ function doSearch(text, loadingId, categoryGroupCode, inputType) {
     var candidates = root.candidates || (Array.isArray(root) ? root : []);
     var mode = root.transportMode || transportMode;
     var dest = root.destination || '';
+    var spoken = root.spoken || '';
+    var topPick = root.topPick || null;
+    var clarification = root.clarification || '';
 
     if (mode !== transportMode) setTransport(mode);
+
+    // (1) 의도가 모호 → 추가 질문만 띄우고 종료
+    if (clarification) {
+      addBotMessage('🤖 ' + clarification);
+      if (ttsEnabled) speak(clarification);
+      return;
+    }
+
     if (candidates.length === 0) {
       addBotMessage(t('search.noResults'));
       speak(t('search.noResultsTts'));
     } else {
       if (dest) addBotMessage(t('search.summary', dest, mode === 'transit' ? t('transport.transit_short') : t('transport.car_short')));
-      showCandidates(candidates);
-      speak(t('search.summaryTts', candidates.length, candidates[0].distanceLabel || '', candidates[0].name));
+      showCandidates(candidates, topPick);
+      // LLM이 추천 멘트를 만들었으면 그걸로, 아니면 fallback
+      if (spoken) speak(spoken);
+      else speak(t('search.summaryTts', candidates.length, candidates[0].distanceLabel || '', candidates[0].name));
     }
   })
   .catch(function(err) {
@@ -2051,7 +2098,7 @@ function removeMessage(id) {
   if (el) el.remove();
 }
 
-function showCandidates(candidates) {
+function showCandidates(candidates, topPick) {
   lastCandidates = candidates;
 
   var wrapper = document.createElement('div');
@@ -2096,20 +2143,27 @@ function showCandidates(candidates) {
     if (mapDiv) updateMiniMap(mapDiv, place);
   }
 
-  candidates.forEach(function(place) {
+  var topIdx = topPick && typeof topPick.index === 'number' ? topPick.index : -1;
+  candidates.forEach(function(place, i) {
     place.name = decodeEntities(place.name || '');
     place.address = decodeEntities(place.address || '');
     place.category = decodeEntities(place.category || '');
     var isFav = isFavorite(place.lat, place.lng);
+    var isAiPick = i === topIdx;
     var card = document.createElement('div');
-    card.className = 'candidate-card' + (candidates.indexOf(place) === 0 ? ' selected' : '');
+    card.className = 'candidate-card' + (i === 0 ? ' selected' : '') + (isAiPick ? ' ai-pick' : '');
     card.dataset.lat = place.lat;
     card.dataset.lng = place.lng;
     card.dataset.name = place.name || '';
     card.dataset.address = place.address || '';
     card.dataset.category = place.category || '';
 
+    var aiBadge = isAiPick
+      ? '<div class="ai-pick-badge">✨ AI 추천' + (topPick.reason ? ' · <span class="ai-reason">' + escHtml(topPick.reason) + '</span>' : '') + '</div>'
+      : '';
+
     card.innerHTML =
+      aiBadge +
       '<div class="card-row1">' +
         '<div class="card-num">' + place.index + '</div>' +
         '<div class="card-info">' +

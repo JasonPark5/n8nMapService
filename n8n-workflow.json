@@ -1,5 +1,5 @@
 {
-  "name": "음성 길찾기 서비스 (Kakao)",
+  "name": "Zentia 음성 길찾기 (Kakao + Claude)",
   "nodes": [
     {
       "parameters": {
@@ -14,18 +14,111 @@
       "name": "Webhook",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
-      "position": [240, 300],
+      "position": [120, 300],
       "webhookId": "map-search"
     },
     {
       "parameters": {
-        "jsCode": "const body = $input.first().json.body || $input.first().json;\nconst text = (body.text || '').trim();\nconst userLat = parseFloat(body.lat) || 37.5665;\nconst userLng = parseFloat(body.lng) || 126.9780;\nconst userTransportMode = body.transportMode || 'transit';\nconst categoryGroupCode = (body.categoryGroupCode || '').trim();\nconst inputType = (body.inputType || 'text').trim(); // 'chip' | 'text' | 'voice'\nconst userChipRadius = parseInt(body.chipRadius) || 5000; // meters\nconst lang = (body.lang || 'ko').trim();\n\nlet q = text;\n// 공통 자연어 클리닝 (ko)\nq = q.replace(/근처\\s*/g, '').trim();\nq = q.replace(/(으로|로)\\s*(가기|가는\\s*길|길찾기|안내|가자|갈래|가고\\s*싶어|가줘)/g, '').trim();\nq = q.replace(/(에|까지)\\s*(가기|가는\\s*길|길찾기|안내)/g, '').trim();\nq = q.replace(/(찾아줘|찾아주세요|알려줘|알려주세요|가줘)/g, '').trim();\n\n// 음성 추가 클리닝 (구어체 패턴)\nif (inputType === 'voice') {\n  q = q.replace(/(좀\\s*)?(검색해줘|검색해주세요|보여줘|보여주세요)/g, '').trim();\n  q = q.replace(/^(거기|저기|여기)\\s*/g, '').trim();\n  q = q.replace(/\\s*(있어\\?*|있나요\\?*|있어요\\?*)$/g, '').trim();\n}\n\n// 영어 자연어 클리닝\nif (lang === 'en') {\n  q = q.replace(/\\b(near\\s*me|near\\s*by|nearby)\\b/gi, '').trim();\n  q = q.replace(/\\b(take|navigate|directions?|go|find|show me|search for|please)\\b/gi, '').trim();\n  q = q.replace(/\\b(to|the|a|an)\\b\\s*$/gi, '').trim();\n}\n\nlet mode = userTransportMode;\nif (/대중교통|버스|지하철|전철|기차|KTX|SRT|transit|bus|subway|train/i.test(text)) mode = 'transit';\nelse if (/자동차|차로|드라이브|운전|차량|차$|car|drive|driving/i.test(text)) mode = 'car';\nq = q.replace(/^(대중교통으로|자동차로|버스로|지하철로|도보로|차로|by transit|by car|by bus|by subway)\\s*/gi, '').trim();\n\nif (!q) q = text;\n\nconst params = {\n  query: q,\n  x: userLng,\n  y: userLat,\n  size: '10',\n};\n\nif (inputType === 'chip') {\n  params.radius = String(userChipRadius);\n  params.sort = 'distance';\n  if (categoryGroupCode) params.category_group_code = categoryGroupCode;\n} else {\n  // text / voice: 정확도 우선, 반경 제한 없음\n  params.sort = 'accuracy';\n}\n\nconst qs = Object.entries(params).map(([k,v]) => k + '=' + encodeURIComponent(v)).join('&');\nconst kakaoUrl = 'https://dapi.kakao.com/v2/local/search/keyword.json?' + qs;\n\nreturn [{\n  json: {\n    query: q,\n    categoryGroupCode,\n    inputType,\n    transportMode: mode,\n    userLat,\n    userLng,\n    originalText: text,\n    lang,\n    chipRadius: userChipRadius,\n    kakaoUrl,\n  }\n}];"
+        "jsCode": "// === 입력 정규화 & 컨텍스트 준비 ===\nconst body = $input.first().json.body || $input.first().json;\nconst text = (body.text || '').trim();\nconst userLat = parseFloat(body.lat) || 37.5665;\nconst userLng = parseFloat(body.lng) || 126.9780;\nconst landmark = (body.landmark || '').trim();\nconst userTransportMode = body.transportMode || 'transit';\nconst categoryGroupCode = (body.categoryGroupCode || '').trim();\nconst inputType = (body.inputType || 'text').trim();\nconst userChipRadius = parseInt(body.chipRadius) || 5000;\nconst lang = (body.lang || 'ko').trim();\nconst favorites = Array.isArray(body.favorites) ? body.favorites : [];\nconst recentSearches = Array.isArray(body.recentSearches) ? body.recentSearches : [];\nconst localTime = body.localTime || new Date().toISOString();\nconst userId = body.userId || 'anonymous';\n\n// 칩(chip) 클릭은 LLM 건너뜀 → 직접 검색\nconst skipLLM = inputType === 'chip';\n\nreturn [{\n  json: {\n    text, userLat, userLng, landmark, userTransportMode, categoryGroupCode,\n    inputType, userChipRadius, lang, favorites, recentSearches, localTime, userId,\n    skipLLM,\n  }\n}];"
       },
-      "id": "prepare-input",
-      "name": "입력 준비",
+      "id": "prepare-context",
+      "name": "컨텍스트 준비",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [460, 300]
+      "position": [320, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "skip-llm-check",
+              "leftValue": "={{ $json.skipLLM }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "true", "singleValue": true }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-skip-llm",
+      "name": "칩? (LLM 스킵)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [520, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-api-key", "value": "YOUR_ANTHROPIC_API_KEY" },
+            { "name": "anthropic-version", "value": "2023-06-01" },
+            { "name": "content-type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-haiku-4-5-20251001\",\n  \"max_tokens\": 600,\n  \"tool_choice\": { \"type\": \"tool\", \"name\": \"resolve_intent\" },\n  \"tools\": [{\n    \"name\": \"resolve_intent\",\n    \"description\": \"사용자 발화에서 검색 의도를 추출합니다.\",\n    \"input_schema\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"intent\": { \"type\": \"string\", \"enum\": [\"search\", \"navigate_favorite\", \"ambiguous\"] },\n        \"query\": { \"type\": \"string\", \"description\": \"카카오 키워드 검색에 쓸 정제된 쿼리. 예: '강남 카페', '키즈존 패밀리 레스토랑'. 지역 힌트 포함 가능.\" },\n        \"categoryGroupCode\": { \"type\": \"string\", \"enum\": [\"\", \"FD6\", \"CE7\", \"CS2\", \"PM9\", \"SW8\", \"PK6\", \"BK9\", \"OL7\", \"HP8\", \"MT1\"], \"description\": \"FD6=음식점, CE7=카페, CS2=편의점, PM9=약국, SW8=지하철역, PK6=주차장, BK9=은행, OL7=주유소, HP8=병원, MT1=마트. 확실하지 않으면 빈 문자열.\" },\n        \"transportMode\": { \"type\": \"string\", \"enum\": [\"transit\", \"car\"] },\n        \"originHint\": { \"type\": \"string\", \"description\": \"검색 기준 위치. '현재위치' 또는 즐겨찾기 별칭(집, 회사 등). 명시 없으면 '현재위치'.\" },\n        \"destinationFavoriteName\": { \"type\": \"string\", \"description\": \"즐겨찾기로 바로 길찾기인 경우 그 이름. 아니면 빈 문자열.\" },\n        \"filters\": { \"type\": \"array\", \"items\": { \"type\": \"string\" }, \"description\": \"결과 큐레이션에 쓸 분위기/조건 키워드. 예: ['아이동반','실내','데이트','조용한']\" },\n        \"spoken\": { \"type\": \"string\", \"description\": \"TTS로 읽어줄 한 줄 응답. 한국어/영어는 lang에 맞춰. 검색 중일 때 자연스럽게.\" },\n        \"clarification\": { \"type\": \"string\", \"description\": \"의도가 모호하면 사용자에게 되물을 질문. 명확하면 빈 문자열.\" }\n      },\n      \"required\": [\"intent\", \"query\", \"transportMode\", \"originHint\", \"filters\", \"spoken\", \"clarification\"]\n    }\n  }],\n  \"system\": \"당신은 한국 길찾기 앱의 의도 분석 어시스턴트입니다. 사용자의 자연어 발화에서 카카오 로컬 검색에 쓸 쿼리/카테고리/필터를 추출하세요. 한국 주요 지역명을 이해합니다. 즐겨찾기 별칭(집, 회사 등)이 발화에 등장하면 originHint에 그 별칭을 넣으세요. '집 근처 애들 갈 데' 같은 발화는 categoryGroupCode='FD6', filters=['아이동반','키즈존'], query='키즈존 패밀리 레스토랑' 처럼 처리하세요. '데이트하기 좋은' 같은 분위기 발화는 categoryGroupCode='CE7' 또는 'FD6', filters=['분위기','데이트']로. 응답 언어는 lang 필드에 맞추세요(ko/en). 모호하면 clarification에 짧은 질문을 넣고 intent='ambiguous'.\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"# 사용자 발화\\n\\\"{{ $json.text }}\\\"\\n\\n# 현재 컨텍스트\\n- 위치: ({{ $json.userLat }}, {{ $json.userLng }}){{ $json.landmark ? ', ' + $json.landmark + ' 근처' : '' }}\\n- 이동수단 기본: {{ $json.userTransportMode }}\\n- 입력 방식: {{ $json.inputType }}\\n- 언어: {{ $json.lang }}\\n- 현지 시간: {{ $json.localTime }}\\n\\n# 즐겨찾기\\n{{ JSON.stringify($json.favorites) }}\\n\\n# 최근 검색\\n{{ JSON.stringify($json.recentSearches) }}\"\n    }\n  ]\n}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "claude-intent",
+      "name": "Claude 의도분석",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [720, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "// === 의도 분석 결과 머지 + 카카오 URL 빌드 ===\nconst ctx = $('컨텍스트 준비').first().json;\nconst llm = $input.first().json;\n\n// Claude tool_use 응답 파싱\nlet intent = { intent: 'search', query: ctx.text, categoryGroupCode: ctx.categoryGroupCode || '', transportMode: ctx.userTransportMode, originHint: '현재위치', destinationFavoriteName: '', filters: [], spoken: '', clarification: '' };\ntry {\n  const block = (llm.content || []).find(b => b.type === 'tool_use');\n  if (block && block.input) intent = Object.assign(intent, block.input);\n} catch (e) {}\n\n// originHint가 즐겨찾기 이름/별칭이면 그 좌표를 검색 중심으로\nlet searchLat = ctx.userLat;\nlet searchLng = ctx.userLng;\nlet originResolved = '현재위치';\nif (intent.originHint && intent.originHint !== '현재위치') {\n  const match = (ctx.favorites || []).find(f => f.alias === intent.originHint || f.name === intent.originHint);\n  if (match) {\n    searchLat = match.lat;\n    searchLng = match.lng;\n    originResolved = match.alias || match.name;\n  }\n}\n\n// navigate_favorite: 검색 건너뛰고 바로 길찾기\nif (intent.intent === 'navigate_favorite' && intent.destinationFavoriteName) {\n  const dest = (ctx.favorites || []).find(f => f.alias === intent.destinationFavoriteName || f.name === intent.destinationFavoriteName);\n  if (dest) {\n    return [{ json: { _final: true, _payload: {\n      candidates: [{ index: 1, name: dest.name, address: '', category: '', lat: dest.lat, lng: dest.lng, distanceM: 0, distanceLabel: '', phone: '', placeUrl: '' }],\n      destination: dest.alias || dest.name,\n      transportMode: intent.transportMode,\n      spoken: intent.spoken || '',\n      topPick: { index: 0, reason: '' },\n      clarification: '',\n    }}}];\n  }\n}\n\n// ambiguous: clarification만 응답\nif (intent.intent === 'ambiguous' && intent.clarification) {\n  return [{ json: { _final: true, _payload: {\n    candidates: [],\n    destination: '',\n    transportMode: intent.transportMode,\n    spoken: intent.spoken || intent.clarification,\n    topPick: null,\n    clarification: intent.clarification,\n  }}}];\n}\n\n// 일반 검색: 카카오 URL 빌드\nconst params = {\n  query: intent.query || ctx.text,\n  x: searchLng,\n  y: searchLat,\n  size: '10',\n  sort: 'accuracy',\n};\nif (intent.categoryGroupCode) params.category_group_code = intent.categoryGroupCode;\nconst qs = Object.entries(params).map(([k,v]) => k + '=' + encodeURIComponent(v)).join('&');\nconst kakaoUrl = 'https://dapi.kakao.com/v2/local/search/keyword.json?' + qs;\n\nreturn [{ json: {\n  _final: false,\n  intent,\n  searchLat,\n  searchLng,\n  originResolved,\n  query: params.query,\n  transportMode: intent.transportMode,\n  kakaoUrl,\n  filters: intent.filters || [],\n  spokenFromIntent: intent.spoken || '',\n} }];"
+      },
+      "id": "process-intent",
+      "name": "의도 처리",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [920, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "// === 칩 직접 검색 (LLM 스킵) ===\nconst ctx = $('컨텍스트 준비').first().json;\nlet q = ctx.text;\nq = q.replace(/근처\\s*/g, '').trim();\nif (!q) q = ctx.text;\n\nconst params = {\n  query: q,\n  x: ctx.userLng,\n  y: ctx.userLat,\n  size: '10',\n  radius: String(ctx.userChipRadius),\n  sort: 'distance',\n};\nif (ctx.categoryGroupCode) params.category_group_code = ctx.categoryGroupCode;\nconst qs = Object.entries(params).map(([k,v]) => k + '=' + encodeURIComponent(v)).join('&');\nconst kakaoUrl = 'https://dapi.kakao.com/v2/local/search/keyword.json?' + qs;\n\nreturn [{ json: {\n  _final: false,\n  intent: { intent: 'search', categoryGroupCode: ctx.categoryGroupCode, filters: [], spoken: '' },\n  searchLat: ctx.userLat,\n  searchLng: ctx.userLng,\n  query: q,\n  transportMode: ctx.userTransportMode,\n  kakaoUrl,\n  filters: [],\n  spokenFromIntent: '',\n  _skipCuration: true,\n}}];"
+      },
+      "id": "chip-direct",
+      "name": "칩 직접 검색",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [720, 400]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "final-check",
+              "leftValue": "={{ $json._final }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "true", "singleValue": true }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-final",
+      "name": "최종 응답?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1120, 200]
     },
     {
       "parameters": {
@@ -34,10 +127,7 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            {
-              "name": "Authorization",
-              "value": "KakaoAK YOUR_KAKAO_REST_API_KEY"
-            }
+            { "name": "Authorization", "value": "KakaoAK YOUR_KAKAO_REST_API_KEY" }
           ]
         },
         "options": {
@@ -52,17 +142,98 @@
       "name": "카카오 키워드 검색",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
-      "position": [680, 300]
+      "position": [1320, 300]
     },
     {
       "parameters": {
-        "jsCode": "const data = $input.first().json;\nconst input = $('입력 준비').first().json;\n\nconst docs = data?.documents || [];\nif (!docs.length) {\n  return [{ json: { candidates: [], destination: input.query, transportMode: input.transportMode } }];\n}\n\nconst candidates = docs.map((d, i) => {\n  const lat = parseFloat(d.y);\n  const lng = parseFloat(d.x);\n  const dm = parseInt(d.distance) || 0;\n  return {\n    index: i + 1,\n    name: d.place_name,\n    address: d.road_address_name || d.address_name || '',\n    category: d.category_group_name || (d.category_name || '').split(' > ').pop() || '',\n    lat, lng,\n    distanceM: dm,\n    distanceLabel: dm < 1000 ? dm + 'm' : (dm / 1000).toFixed(1) + 'km',\n    phone: d.phone || '',\n    placeUrl: d.place_url || '',\n  };\n});\n\nreturn [{ json: { candidates, destination: input.query, transportMode: input.transportMode } }];"
+        "jsCode": "// === Kakao 결과 정규화 ===\nconst data = $input.first().json;\nconst prev = $('의도 처리').first().json._final ? $('의도 처리').first().json : ($('칩 직접 검색').first() ? $('칩 직접 검색').first().json : $('의도 처리').first().json);\n\nconst docs = data?.documents || [];\nconst candidates = docs.map((d, i) => {\n  const lat = parseFloat(d.y);\n  const lng = parseFloat(d.x);\n  const dm = parseInt(d.distance) || 0;\n  return {\n    index: i + 1,\n    name: d.place_name,\n    address: d.road_address_name || d.address_name || '',\n    category: d.category_group_name || (d.category_name || '').split(' > ').pop() || '',\n    lat, lng,\n    distanceM: dm,\n    distanceLabel: dm < 1000 ? dm + 'm' : (dm / 1000).toFixed(1) + 'km',\n    phone: d.phone || '',\n    placeUrl: d.place_url || '',\n  };\n});\n\nreturn [{ json: {\n  candidates,\n  destination: prev.query || '',\n  transportMode: prev.transportMode,\n  filters: prev.filters || [],\n  spokenFromIntent: prev.spokenFromIntent || '',\n  skipCuration: !!prev._skipCuration,\n}}];"
       },
-      "id": "format-results",
-      "name": "결과 포맷",
+      "id": "normalize-results",
+      "name": "결과 정규화",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [900, 300]
+      "position": [1520, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "skip-cur",
+              "leftValue": "={{ $json.skipCuration }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "true", "singleValue": true }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-skip-curation",
+      "name": "큐레이션 스킵?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1720, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-api-key", "value": "YOUR_ANTHROPIC_API_KEY" },
+            { "name": "anthropic-version", "value": "2023-06-01" },
+            { "name": "content-type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-6\",\n  \"max_tokens\": 500,\n  \"tool_choice\": { \"type\": \"tool\", \"name\": \"curate_results\" },\n  \"tools\": [{\n    \"name\": \"curate_results\",\n    \"description\": \"검색 결과 후보 중 사용자 의도에 가장 잘 맞는 곳을 추천합니다.\",\n    \"input_schema\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"rankedIndices\": { \"type\": \"array\", \"items\": { \"type\": \"integer\" }, \"description\": \"필터/의도 적합도 + 거리 종합 순위(원본 인덱스 0-based). 모든 후보 포함.\" },\n        \"topPickIndex\": { \"type\": \"integer\", \"description\": \"1순위 후보의 원본 인덱스(0-based).\" },\n        \"topPickReason\": { \"type\": \"string\", \"description\": \"왜 이 곳인지 한 줄 설명. 너무 길지 않게(40자 내외).\" },\n        \"spoken\": { \"type\": \"string\", \"description\": \"TTS로 읽어줄 자연스러운 한 줄 응답. 1순위 + 개수를 포함하면 좋음.\" }\n      },\n      \"required\": [\"rankedIndices\", \"topPickIndex\", \"topPickReason\", \"spoken\"]\n    }\n  }],\n  \"system\": \"당신은 검색 결과 큐레이터입니다. 사용자의 필터/분위기/의도와 후보들의 카테고리/거리를 종합해 가장 맞는 곳을 추천하세요. 응답 언어는 ko/en에 맞춥니다.\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"# 원본 발화\\n\\\"{{ $('컨텍스트 준비').first().json.text }}\\\"\\n\\n# 의도 필터\\n{{ JSON.stringify($json.filters) }}\\n\\n# 언어: {{ $('컨텍스트 준비').first().json.lang }}\\n\\n# 후보 (0-based)\\n{{ JSON.stringify($json.candidates.map((c,i) => ({i, name:c.name, category:c.category, address:c.address, distance:c.distanceLabel}))) }}\"\n    }\n  ]\n}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "claude-curate",
+      "name": "Claude 큐레이션",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1920, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "// === 최종 응답 조립 (LLM 결과 머지) ===\nconst prev = $('결과 정규화').first().json;\nconst llm = $input.first().json;\n\nlet curation = { rankedIndices: prev.candidates.map((_,i) => i), topPickIndex: 0, topPickReason: '', spoken: prev.spokenFromIntent || '' };\ntry {\n  const block = (llm.content || []).find(b => b.type === 'tool_use');\n  if (block && block.input) curation = Object.assign(curation, block.input);\n} catch (e) {}\n\n// rankedIndices에 따라 재정렬\nconst ordered = curation.rankedIndices\n  .map(i => prev.candidates[i])\n  .filter(Boolean)\n  .map((c, newI) => Object.assign({}, c, { index: newI + 1 }));\n\n// topPickIndex를 새 순서 기준으로 매핑\nconst newTopIdx = curation.rankedIndices.indexOf(curation.topPickIndex);\n\nreturn [{ json: {\n  candidates: ordered,\n  destination: prev.destination,\n  transportMode: prev.transportMode,\n  spoken: curation.spoken || prev.spokenFromIntent || '',\n  topPick: { index: newTopIdx >= 0 ? newTopIdx : 0, reason: curation.topPickReason || '' },\n  clarification: '',\n}}];"
+      },
+      "id": "merge-curation",
+      "name": "큐레이션 머지",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2120, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "// 큐레이션 없이 그대로 응답 (chip 경로)\nconst prev = $input.first().json;\nreturn [{ json: {\n  candidates: prev.candidates,\n  destination: prev.destination,\n  transportMode: prev.transportMode,\n  spoken: prev.spokenFromIntent || '',\n  topPick: null,\n  clarification: '',\n}}];"
+      },
+      "id": "passthrough",
+      "name": "그대로 응답",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1920, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "// 최종 응답을 그대로 통과 (의도 처리에서 _final=true)\nconst prev = $input.first().json;\nreturn [{ json: prev._payload || prev }];"
+      },
+      "id": "final-passthrough",
+      "name": "최종 통과",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1320, 100]
     },
     {
       "parameters": {
@@ -83,20 +254,59 @@
       "name": "Webhook 응답",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
-      "position": [1120, 300]
+      "position": [2320, 300]
     }
   ],
   "connections": {
     "Webhook": {
-      "main": [[{ "node": "입력 준비", "type": "main", "index": 0 }]]
+      "main": [[{ "node": "컨텍스트 준비", "type": "main", "index": 0 }]]
     },
-    "입력 준비": {
+    "컨텍스트 준비": {
+      "main": [[{ "node": "칩? (LLM 스킵)", "type": "main", "index": 0 }]]
+    },
+    "칩? (LLM 스킵)": {
+      "main": [
+        [{ "node": "칩 직접 검색", "type": "main", "index": 0 }],
+        [{ "node": "Claude 의도분석", "type": "main", "index": 0 }]
+      ]
+    },
+    "Claude 의도분석": {
+      "main": [[{ "node": "의도 처리", "type": "main", "index": 0 }]]
+    },
+    "의도 처리": {
+      "main": [[{ "node": "최종 응답?", "type": "main", "index": 0 }]]
+    },
+    "최종 응답?": {
+      "main": [
+        [{ "node": "최종 통과", "type": "main", "index": 0 }],
+        [{ "node": "카카오 키워드 검색", "type": "main", "index": 0 }]
+      ]
+    },
+    "칩 직접 검색": {
       "main": [[{ "node": "카카오 키워드 검색", "type": "main", "index": 0 }]]
     },
     "카카오 키워드 검색": {
-      "main": [[{ "node": "결과 포맷", "type": "main", "index": 0 }]]
+      "main": [[{ "node": "결과 정규화", "type": "main", "index": 0 }]]
     },
-    "결과 포맷": {
+    "결과 정규화": {
+      "main": [[{ "node": "큐레이션 스킵?", "type": "main", "index": 0 }]]
+    },
+    "큐레이션 스킵?": {
+      "main": [
+        [{ "node": "그대로 응답", "type": "main", "index": 0 }],
+        [{ "node": "Claude 큐레이션", "type": "main", "index": 0 }]
+      ]
+    },
+    "Claude 큐레이션": {
+      "main": [[{ "node": "큐레이션 머지", "type": "main", "index": 0 }]]
+    },
+    "큐레이션 머지": {
+      "main": [[{ "node": "Webhook 응답", "type": "main", "index": 0 }]]
+    },
+    "그대로 응답": {
+      "main": [[{ "node": "Webhook 응답", "type": "main", "index": 0 }]]
+    },
+    "최종 통과": {
       "main": [[{ "node": "Webhook 응답", "type": "main", "index": 0 }]]
     }
   },
@@ -107,5 +317,5 @@
   "tags": [{ "name": "지도서비스" }],
   "triggerCount": 0,
   "updatedAt": "2026-06-12T00:00:00.000Z",
-  "versionId": "3"
+  "versionId": "4"
 }
