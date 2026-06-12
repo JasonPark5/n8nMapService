@@ -1606,13 +1606,18 @@ function populateVoiceSelect() {
 }
 
 function previewVoice() {
+  if (!window.speechSynthesis) return;
   var sel = document.getElementById('voiceSelect');
-  var prevSelected = selectedVoiceURI;
-  selectedVoiceURI = sel ? sel.value : '';
-  var prevTts = ttsEnabled; ttsEnabled = true;
-  speak(t('voice.previewSample'));
-  ttsEnabled = prevTts;
-  selectedVoiceURI = prevSelected; // not yet committed until 저장
+  var previewURI = sel ? sel.value : '';
+  speechSynthesis.cancel();
+  var utter = new SpeechSynthesisUtterance(t('voice.previewSample'));
+  utter.lang = currentLang === 'en' ? 'en-US' : 'ko-KR';
+  utter.rate = 1.05;
+  if (previewURI) {
+    var v = availableVoices.find(function(v) { return v.voiceURI === previewURI; });
+    if (v) utter.voice = v;
+  }
+  speechSynthesis.speak(utter);
 }
 
 function toggleTTS() {
