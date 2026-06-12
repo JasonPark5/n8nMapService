@@ -1149,10 +1149,10 @@ function fetchNearbyLandmark(lat, lng) {
   .then(function(r) { return r.json(); })
   .then(function(data) {
     var a = data.address || {};
-    // 표시용: 건물/시설명
-    var display = a.amenity || a.shop || a.office || a.building || a.road || a.neighbourhood || a.suburb || '';
-    // 쿼리 보강용: 도로명 우선, 없으면 동/구 단위
-    currentLocationName = a.road || a.quarter || a.neighbourhood || a.suburb || a.city_district || a.district || '';
+    // UI 표시용: 도로명 또는 건물/시설명
+    var display = a.road || a.amenity || a.shop || a.office || a.building || a.neighbourhood || a.suburb || '';
+    // 쿼리 보강용: 동/구 단위 (도로명은 "가산디지털1로 지하철역" 처럼 검색 실패 유발)
+    currentLocationName = a.quarter || a.neighbourhood || a.suburb || a.city_district || a.district || a.county || '';
     if (display) {
       document.getElementById('landmarkText').textContent = display + ' 근처';
       document.getElementById('locationLandmark').style.display = 'block';
