@@ -36,7 +36,7 @@
           "parameters": [
             {
               "name": "Authorization",
-              "value": "KakaoAK YOUR_KAKAO_REST_API_KEY"
+              "value": "KakaoAK 0347dd3cccb978a06aa85a964bb7df94"
             }
           ]
         },
