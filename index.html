@@ -1591,11 +1591,15 @@ function showCandidates(candidates) {
     var mapDiv = document.createElement('div');
     mapDiv.className = 'mini-map-wrap';
     var c0 = candidates[0];
-    mapDiv.innerHTML = '<iframe class="mini-map" src="https://map.kakao.com/link/map/' + encodeURIComponent(c0.name) + ',' + c0.lat + ',' + c0.lng + '" frameborder="0" allowfullscreen></iframe>';
+    var bbox = (c0.lng - 0.004) + ',' + (c0.lat - 0.003) + ',' + (c0.lng + 0.004) + ',' + (c0.lat + 0.003);
+    mapDiv.innerHTML = '<iframe class="mini-map" src="https://www.openstreetmap.org/export/embed.html?bbox=' + bbox + '&layer=mapnik&marker=' + c0.lat + ',' + c0.lng + '" frameborder="0" loading="lazy"></iframe>';
     inner.appendChild(mapDiv);
   }
 
   candidates.forEach(function(place) {
+    place.name = decodeEntities(place.name || '');
+    place.address = decodeEntities(place.address || '');
+    place.category = decodeEntities(place.category || '');
     var isFav = isFavorite(place.lat, place.lng);
     var card = document.createElement('div');
     card.className = 'candidate-card';
@@ -1782,6 +1786,10 @@ document.getElementById('configModal').addEventListener('click', function(e) {
 function scrollToBottom() {
   var c = document.getElementById('chatArea');
   c.scrollTop = c.scrollHeight;
+}
+
+function decodeEntities(str) {
+  return String(str).replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#39;/g,"'");
 }
 
 function escHtml(str) {
